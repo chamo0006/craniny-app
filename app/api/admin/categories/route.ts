@@ -55,9 +55,11 @@ export async function PATCH(req: Request) {
     if (!Array.isArray(order)) {
       return NextResponse.json({ error: "order debe ser un array de nombres" }, { status: 400 })
     }
-    const overrides = await loadCatOverrides()
-    overrides.order = order.map(String)
-    await saveCatOverrides(overrides)
+    if (!process.env.DATABASE_URL) {
+      const overrides = await loadCatOverrides()
+      overrides.order = order.map(String)
+      await saveCatOverrides(overrides)
+    }
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
