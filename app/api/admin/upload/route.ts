@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 import fs from "fs/promises"
 import path from "path"
 
-const BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? "product-images"
+const BUCKET = "products"
 
 export async function POST(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   const form = await req.formData()
   const files = form.getAll("files") as File[]
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No se recibieron archivos" }, { status: 400 })
   }
 
-  // Fallback: save locally to public/images/products/
+  // Fallback: save locally when Supabase isn't configured
   if (!supabaseUrl || !serviceKey) {
     try {
       const uploadDir = path.join(process.cwd(), "public", "images", "products")
@@ -25,9 +26,8 @@ export async function POST(req: Request) {
       for (const file of files) {
         const ext = file.name.split(".").pop() ?? "jpg"
         const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const dest = path.join(uploadDir, filename)
         const buffer = Buffer.from(await file.arrayBuffer())
-        await fs.writeFile(dest, buffer)
+        await fs.writeFile(path.join(uploadDir, filename), buffer)
         urls.push(`/images/products/${filename}`)
       }
 
@@ -37,33 +37,31 @@ export async function POST(req: Request) {
     }
   }
 
-  // Supabase storage upload
+  // Supabase Storage upload via SDK
+  const supabase = createClient(supabaseUrl, serviceKey)
+
   try {
     const urls: string[] = []
 
     for (const file of files) {
       const ext = file.name.split(".").pop() ?? "jpg"
-      const name = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const buffer = Buffer.from(await file.arrayBuffer())
 
-      const res = await fetch(
-        `${supabaseUrl}/storage/v1/object/${BUCKET}/${name}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            "Content-Type": file.type || "application/octet-stream",
-            "x-upsert": "false",
-          },
-          body: await file.arrayBuffer(),
-        }
-      )
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .upload(filePath, buffer, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        })
 
-      if (!res.ok) {
-        const detail = await res.text()
-        throw new Error(`Error subiendo ${file.name}: ${detail}`)
-      }
+      if (error) throw new Error(`Error subiendo ${file.name}: ${error.message}`)
 
-      urls.push(`${supabaseUrl}/storage/v1/object/public/${BUCKET}/${name}`)
+      const { data: { publicUrl } } = supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(data.path)
+
+      urls.push(publicUrl)
     }
 
     return NextResponse.json({ urls })
