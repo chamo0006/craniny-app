@@ -1,0 +1,24 @@
+{
+  "added": [
+    {
+      "id": 1779842222773,
+      "nombre": "Chalecos"
+    },
+    {
+      "id": 1779854976216,
+      "nombre": "Conjuntos"
+    }
+  ],
+  "deleted": [],
+  "order": [
+    "Buzos",
+    "Remeras",
+    "Pantalones",
+    "Camperas",
+    "Perros",
+    "Bermudas",
+    "Chalecos",
+    "Gorras",
+    "Conjuntos"
+  ]
+}

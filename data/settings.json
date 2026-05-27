@@ -1,0 +1,20 @@
+{
+  "defaultDiscountType": "efectivo",
+  "defaultDiscountPercent": 4,
+  "freeShippingThreshold": 150000,
+  "products": {
+    "2": {
+      "freeShipping": true,
+      "discountType": "transferencia",
+      "discountPercent": 10
+    },
+    "1779855429507": {
+      "freeShipping": false
+    },
+    "1779901750372": {
+      "freeShipping": true,
+      "discountType": "transferencia",
+      "discountPercent": 42
+    }
+  }
+}

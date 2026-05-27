@@ -1,0 +1,22 @@
+{
+  "2": {
+    "imagenes": [
+      "/images/products/Bermuda.webp",
+      "/images/products/1779857995314-f09897p70ie.webp"
+    ]
+  },
+  "1779855429507": {
+    "nombre": "Conjunto Verde",
+    "imagen_url": "/images/products/1779856982903-vqtkd4rafll.jpg",
+    "imagenes": [
+      "/images/products/1779856982903-vqtkd4rafll.jpg",
+      "/images/products/1779857963907-k9ogi3a8x1r.jpg"
+    ]
+  },
+  "1779901750372": {
+    "nombre": "Fitu gordo",
+    "imagenes": [
+      "/images/products/1779901678762-a9irkg65gn.png"
+    ]
+  }
+}

@@ -1,0 +1,95 @@
+[
+  {
+    "id": 1779429228992,
+    "nombre": "Campera de cuero",
+    "descripcion": "Nueva campera de cuero",
+    "precio": 23000,
+    "category": "Camperas",
+    "variants": [
+      {
+        "talle": "S",
+        "color": "Rojo",
+        "stock": 10,
+        "imagen_url": "/images/products/Campera.webp"
+      }
+    ]
+  },
+  {
+    "id": 1779842285322,
+    "nombre": "Chaleco Puffer",
+    "descripcion": "Chaleco craniny, ideal para esa comodidad cuando hace frio!!\n\nCon capucha y vinilo 3D Craniny.",
+    "precio": 349999,
+    "category": "Chalecos",
+    "variants": [
+      {
+        "color": "Negro",
+        "talle": "S",
+        "stock": 5,
+        "imagen_url": "/images/products/1779842265069-zlq9rir08t.webp"
+      },
+      {
+        "color": "Negro",
+        "talle": "M",
+        "stock": 2,
+        "imagen_url": "/images/products/1779842265069-zlq9rir08t.webp"
+      },
+      {
+        "color": "Negro",
+        "talle": "L",
+        "stock": 4,
+        "imagen_url": "/images/products/1779842265069-zlq9rir08t.webp"
+      },
+      {
+        "color": "Negro",
+        "talle": "XL",
+        "stock": 6,
+        "imagen_url": "/images/products/1779842265069-zlq9rir08t.webp"
+      }
+    ]
+  },
+  {
+    "id": 1779855429507,
+    "nombre": "Conjunto Beige",
+    "descripcion": "El mejor conjunto para este invierno !!!\nNo te lo pierdas.",
+    "precio": 45000,
+    "category": "Conjuntos",
+    "variants": [
+      {
+        "color": "Verde",
+        "talle": "S",
+        "stock": 0,
+        "imagen_url": "/images/products/1779855389610-hjpv2g4hvmp.jpg"
+      },
+      {
+        "color": "Verde",
+        "talle": "M",
+        "stock": 0,
+        "imagen_url": "/images/products/1779855389610-hjpv2g4hvmp.jpg"
+      },
+      {
+        "color": "Verde",
+        "talle": "L",
+        "stock": 0,
+        "imagen_url": "/images/products/1779855389610-hjpv2g4hvmp.jpg"
+      },
+      {
+        "color": "Verde",
+        "talle": "XS",
+        "stock": 0,
+        "imagen_url": "/images/products/1779855389610-hjpv2g4hvmp.jpg"
+      },
+      {
+        "color": "Verde",
+        "talle": "XL",
+        "stock": 0,
+        "imagen_url": "/images/products/1779855389610-hjpv2g4hvmp.jpg"
+      },
+      {
+        "color": "Verde",
+        "talle": "XXL",
+        "stock": 0,
+        "imagen_url": "/images/products/1779855389610-hjpv2g4hvmp.jpg"
+      }
+    ]
+  }
+]
