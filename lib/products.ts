@@ -206,18 +206,24 @@ export async function getCategories(): Promise<Category[]> {
     // Custom categories added via admin (minus deleted ones)
     const activeAdded = overrides.added.filter((c) => !overrides.deleted.includes(c.id))
 
-    const knownNames = new Set([
-      ...activeFallback.map((c) => c.nombre),
-      ...activeAdded.map((c) => c.nombre),
-    ])
+    const knownNames = new Set(
+      [...activeFallback, ...activeAdded].map((c) => c.nombre.toLowerCase())
+    )
 
-    // Categories inferred from saved products that aren't already known
+    // Categories inferred from saved products that aren't already known.
+    // Use a stable numeric ID derived from the name so IDs don't shift when products are added/removed.
+    const stableId = (name: string): number => {
+      let h = 3000
+      for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0
+      return Math.abs(h) + 3000
+    }
+
     const savedCategoryNames = Array.from(
       new Set(saved.map((p) => p.category).filter(Boolean))
     ) as string[]
     const savedCats = savedCategoryNames
-      .filter((name) => !knownNames.has(name))
-      .map((name, idx) => ({ id: 2000 + idx, nombre: name }))
+      .filter((name) => !knownNames.has(name.toLowerCase()))
+      .map((name) => ({ id: stableId(name), nombre: name }))
 
     const all = [...activeFallback, ...activeAdded, ...savedCats]
 

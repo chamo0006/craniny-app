@@ -184,7 +184,7 @@ export async function DELETE(req: Request) {
     }
 
     // DB mode: delete from DB first
-    const varRes = await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
+    await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
     const prodRes = await query("DELETE FROM productos WHERE id = $1", [id])
     const deletedFromDb = (prodRes.rowCount ?? 0) > 0
 

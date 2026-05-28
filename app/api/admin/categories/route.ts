@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { getCategories, fallbackCategories } from "@/lib/products"
 import { loadCatOverrides, saveCatOverrides } from "@/lib/categories-overrides"
+import fs from "fs/promises"
+import path from "path"
+
+const SAVED_FILE = path.join(process.cwd(), "data", "saved-products.json")
 
 export async function GET() {
   try {
@@ -22,9 +26,19 @@ export async function POST(req: Request) {
     if (!process.env.DATABASE_URL) {
       const overrides = await loadCatOverrides()
       const trimmed = nombre.trim()
+
+      // Gather all known category names (fallback + added + inferred from saved products)
+      let savedCatNames: string[] = []
+      try {
+        const raw = await fs.readFile(SAVED_FILE, "utf8").catch(() => "[]")
+        const savedProds: { category?: string | null }[] = JSON.parse(raw || "[]")
+        savedCatNames = [...new Set(savedProds.map((p) => p.category).filter(Boolean) as string[])]
+      } catch {}
+
       const allNames = [
         ...fallbackCategories.map((c) => c.nombre.toLowerCase()),
         ...overrides.added.map((c) => c.nombre.toLowerCase()),
+        ...savedCatNames.map((n) => n.toLowerCase()),
       ]
       if (allNames.includes(trimmed.toLowerCase())) {
         return NextResponse.json({ error: "Ya existe una categoría con ese nombre." }, { status: 409 })
@@ -78,13 +92,34 @@ export async function DELETE(req: Request) {
       const overrides = await loadCatOverrides()
       const isHardcoded = fallbackCategories.some((c) => c.id === id)
       const isAdded = overrides.added.some((c) => c.id === id)
-      if (!isHardcoded && !isAdded) {
+
+      // Also check categories inferred from saved products (identified by stable id >= 3000)
+      let savedCatName: string | null = null
+      if (!isHardcoded && !isAdded && id >= 3000) {
+        try {
+          const raw = await fs.readFile(SAVED_FILE, "utf8").catch(() => "[]")
+          const savedProds: { category?: string | null }[] = JSON.parse(raw || "[]")
+          const savedNames = [...new Set(savedProds.map((p) => p.category).filter(Boolean) as string[])]
+          const stableId = (name: string): number => {
+            let h = 3000
+            for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0
+            return Math.abs(h) + 3000
+          }
+          savedCatName = savedNames.find((n) => stableId(n) === id) ?? null
+        } catch {}
+      }
+
+      if (!isHardcoded && !isAdded && !savedCatName) {
         return NextResponse.json({ error: "Categoría no encontrada." }, { status: 404 })
       }
       if (isAdded) {
         overrides.added = overrides.added.filter((c) => c.id !== id)
-      } else {
+      } else if (isHardcoded) {
         if (!overrides.deleted.includes(id)) overrides.deleted.push(id)
+      }
+      // For savedCat: removing it from the order list is enough; it'll auto-disappear when no product uses it
+      if (savedCatName) {
+        overrides.order = overrides.order.filter((n) => n !== savedCatName)
       }
       await saveCatOverrides(overrides)
       return NextResponse.json({ ok: true })
