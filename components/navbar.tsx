@@ -45,7 +45,8 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl text-slate-900">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 md:gap-8">
-          <div className="flex items-center gap-4">
+          {/* Columna izquierda: hamburger (mobile) + logo (desktop) */}
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -54,10 +55,17 @@ export function Navbar() {
             >
               <Menu className="size-6" />
             </button>
-            <Logo />
+            <div className="hidden md:block">
+              <Logo />
+            </div>
           </div>
 
-          <nav className="hidden items-center justify-center gap-6 lg:gap-10 md:flex">
+          {/* Columna central: logo centrado (mobile) | nav (desktop) */}
+          <div className="flex items-center justify-center">
+            <div className="md:hidden">
+              <Logo />
+            </div>
+            <nav className="hidden items-center justify-center gap-6 lg:gap-10 md:flex">
             <Link href="/" className={navLinkClass}>
               INICIO
             </Link>
@@ -111,6 +119,7 @@ export function Navbar() {
               CONTACTO
             </Link>
           </nav>
+          </div>
 
           <div className="flex items-center justify-end gap-3">
             {/* LOGIN — habilitarlo cuando esté listo
@@ -124,7 +133,7 @@ export function Navbar() {
             <button
               type="button"
               onClick={openCart}
-              className="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-slate-950 text-white transition hover:bg-slate-800"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-950 text-white transition hover:bg-slate-800 md:h-12 md:w-12"
               aria-label="Abrir carrito"
             >
               <ShoppingBag className="size-5" />

@@ -230,7 +230,9 @@ export async function getCategories(): Promise<Category[]> {
   }
 
   const result = await query<Category>("SELECT id, nombre FROM categorias ORDER BY nombre")
-  return result.rows
+  const dbNames = new Set(result.rows.map((c) => c.nombre.toLowerCase()))
+  const fallbackOnly = fallbackCategories.filter((c) => !dbNames.has(c.nombre.toLowerCase()))
+  return [...fallbackOnly, ...result.rows]
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -243,7 +245,8 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     `SELECT id, nombre FROM categorias WHERE LOWER(REGEXP_REPLACE(nombre, '\\s+', '-', 'g')) = $1 LIMIT 1`,
     [slug]
   )
-  return result.rows[0] ?? null
+  if (result.rows[0]) return result.rows[0]
+  return fallbackCategories.find((c) => normalizeSlug(c.nombre) === slug) ?? null
 }
 
 export async function getProducts(): Promise<ProductListItem[]> {
@@ -308,9 +311,16 @@ export async function getProducts(): Promise<ProductListItem[]> {
         ).rows
       : []
 
+  const dbProductIds = new Set(productsResult.rows.map((p) => p.id))
+  const fallbackItems = fallbackProducts
+    .filter((p) => !dbProductIds.has(p.id))
+    .map((p) => {
+      const rawVariants = fallbackVariants.filter((v) => v.producto_id === p.id)
+      return buildProductListItem({ ...p, nombre: p.nombre }, rawVariants)
+    })
   const dbItems = productsResult.rows.map((product) => buildProductListItem(product, variants))
   const savedItems = saved.map((p) => {
-    const variants = (p.variants || []).map((v, idx) => ({
+    const savedVariants = (p.variants || []).map((v, idx) => ({
       id: idx + 1,
       producto_id: p.id,
       talle: v.talle || "",
@@ -318,10 +328,10 @@ export async function getProducts(): Promise<ProductListItem[]> {
       stock: v.stock || 0,
       imagen_url: v.imagen_url || null,
     }))
-    return buildProductListItem(p, variants)
+    return buildProductListItem(p, savedVariants)
   })
 
-  return dedupeProductsByImagePerCategory([...dbItems, ...savedItems])
+  return dedupeProductsByImagePerCategory([...fallbackItems, ...dbItems, ...savedItems])
 }
 
 export async function getProductsByCategorySlug(slug: string): Promise<ProductListItem[]> {
@@ -390,9 +400,16 @@ export async function getProductsByCategorySlug(slug: string): Promise<ProductLi
         ).rows
       : []
 
-  return dedupeProductsByImagePerCategory(
-    productsResult.rows.map((product) => buildProductListItem(product, variants))
-  )
+  const dbProductIds = new Set(productsResult.rows.map((p) => p.id))
+  const fallbackForCategory = fallbackProducts
+    .filter((p) => p.category === category.nombre && !dbProductIds.has(p.id))
+    .map((p) => {
+      const rawVariants = fallbackVariants.filter((v) => v.producto_id === p.id)
+      return buildProductListItem({ ...p, nombre: p.nombre }, rawVariants)
+    })
+  const dbItems = productsResult.rows.map((product) => buildProductListItem(product, variants))
+
+  return dedupeProductsByImagePerCategory([...fallbackForCategory, ...dbItems])
 }
 
 export async function getProductById(id: number): Promise<ProductDetail | null> {
@@ -466,7 +483,27 @@ export async function getProductById(id: number): Promise<ProductDetail | null> 
 
   const productRow = productResult.rows[0]
   if (!productRow) {
-    return null
+    const fallback = fallbackProducts.find((p) => p.id === id)
+    if (!fallback) return null
+    const rawVariants = fallbackVariants.filter((v) => v.producto_id === id)
+    const colors = Array.from(new Set(rawVariants.map((v) => v.color).filter(Boolean)))
+    const sizes = Array.from(new Set(rawVariants.map((v) => v.talle).filter(Boolean)))
+    const stock = rawVariants.reduce((t, v) => t + v.stock, 0)
+    const image = rawVariants.find((v) => v.imagen_url)?.imagen_url ||
+      "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=800&fit=crop"
+    return {
+      id: fallback.id,
+      name: fallback.nombre,
+      description: null,
+      price: Number(fallback.precio),
+      category: fallback.category || "Sin categoría",
+      colors,
+      sizes,
+      image,
+      stock,
+      variants: rawVariants,
+      galleryImages: [],
+    }
   }
 
   const variantsResult = await query<Variant>(
@@ -590,7 +627,19 @@ export async function getProductsWithVariants(): Promise<ProductWithVariants[]> 
     [productIds]
   )
 
-  return productsResult.rows.map((p) => ({
+  const dbProductIds = new Set(productsResult.rows.map((p) => p.id))
+  const fallbackItems: ProductWithVariants[] = fallbackProducts
+    .filter((p) => !dbProductIds.has(p.id))
+    .map((p) => ({
+      id: p.id,
+      name: p.nombre,
+      price: Number(p.precio),
+      category: p.category || "Sin categoría",
+      variants: fallbackVariants.filter((v) => v.producto_id === p.id),
+      imagenes: [],
+    }))
+
+  const dbItems = productsResult.rows.map((p) => ({
     id: p.id,
     name: p.nombre,
     price: Number(p.precio),
@@ -598,4 +647,6 @@ export async function getProductsWithVariants(): Promise<ProductWithVariants[]> 
     variants: variantsResult.rows.filter((v) => v.producto_id === p.id),
     imagenes: [],
   }))
+
+  return [...fallbackItems, ...dbItems]
 }
