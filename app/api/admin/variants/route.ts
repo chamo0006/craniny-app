@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { loadStockOverrides, saveStockOverrides, stockOverrideKey } from "@/lib/stock-overrides"
 import { loadVariantAdditions, saveVariantAdditions } from "@/lib/variant-additions"
+import fs from "fs/promises"
+import path from "path"
+
+const SAVED_FILE = path.join(process.cwd(), "data", "saved-products.json")
 
 const PG_INT_MAX = 2_147_483_647
 const isSavedProductId = (id: number) => id > PG_INT_MAX
@@ -120,6 +124,74 @@ export async function POST(req: Request) {
       resultId = ins.rows[0].id
     }
     return NextResponse.json({ ok: true, mode: "db", id: resultId })
+  } catch (err: any) {
+    return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const variantId = parseInt(searchParams.get("variantId") ?? "", 10)
+    const productId = parseInt(searchParams.get("productId") ?? "", 10)
+    const talle = searchParams.get("talle") ?? ""
+    const color = searchParams.get("color") ?? ""
+
+    if (isNaN(variantId) || isNaN(productId)) {
+      return NextResponse.json({ error: "Parámetros inválidos" }, { status: 400 })
+    }
+
+    // Helper to remove variant from saved-products.json
+    const deleteFromSaved = async (): Promise<"deleted" | "not_found" | "readonly"> => {
+      try {
+        const raw = await fs.readFile(SAVED_FILE, "utf8").catch(() => "[]")
+        const saved: Array<{ id: number; variants?: Array<{ talle?: string; color?: string }> }> =
+          JSON.parse(raw || "[]")
+        const prodIdx = saved.findIndex((p) => p.id === productId)
+        if (prodIdx < 0) return "not_found"
+        const before = (saved[prodIdx].variants || []).length
+        saved[prodIdx].variants = (saved[prodIdx].variants || []).filter(
+          (v) => !(v.talle === talle && v.color === color)
+        )
+        if (saved[prodIdx].variants.length === before) return "not_found"
+        await fs.writeFile(SAVED_FILE, JSON.stringify(saved, null, 2), "utf8")
+        return "deleted"
+      } catch {
+        return "readonly"
+      }
+    }
+
+    if (!process.env.DATABASE_URL) {
+      const res = await deleteFromSaved()
+      if (res === "readonly") {
+        return NextResponse.json({ error: "El servidor no puede escribir archivos. Configurá Supabase." }, { status: 500 })
+      }
+      // Also remove from variant-additions and stock-overrides
+      const [additions, overrides] = await Promise.all([loadVariantAdditions(), loadStockOverrides()])
+      const newAdditions = additions.filter((a) => !(a.productId === productId && a.talle === talle && a.color === color))
+      delete overrides[stockOverrideKey(productId, talle, color)]
+      await Promise.allSettled([saveVariantAdditions(newAdditions), saveStockOverrides(overrides)])
+      return NextResponse.json({ ok: true, mode: "fallback" })
+    }
+
+    // DB mode — saved-file product (timestamp ID)
+    if (isSavedProductId(productId)) {
+      const res = await deleteFromSaved()
+      if (res === "readonly") {
+        return NextResponse.json(
+          { error: "Este producto no está en la base de datos. Migralo desde Configuración → Migración y luego podrás eliminar variantes." },
+          { status: 422 }
+        )
+      }
+      return NextResponse.json({ ok: true, mode: "saved-file" })
+    }
+
+    // DB mode — normal DB product
+    const result = await query("DELETE FROM variantes_producto WHERE id = $1", [variantId])
+    if ((result.rowCount ?? 0) === 0) {
+      return NextResponse.json({ error: "Variante no encontrada." }, { status: 404 })
+    }
+    return NextResponse.json({ ok: true, mode: "db" })
   } catch (err: any) {
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }

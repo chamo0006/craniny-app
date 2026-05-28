@@ -43,7 +43,7 @@ const fallbackCategories: Category[] = [
   { id: 6, nombre: "Gorras" },
 ]
 
-export { fallbackCategories }
+export { fallbackCategories, fallbackProducts, fallbackVariants }
 
 const fallbackVariants: Variant[] = [
   { id: 2, producto_id: 6, talle: "L", color: "Blanco", stock: 8, imagen_url: "/images/products/Remera-Black.webp" },
@@ -247,8 +247,13 @@ export async function getCategories(): Promise<Category[]> {
 
   const result = await query<Category>("SELECT id, nombre FROM categorias ORDER BY nombre")
   const dbNames = new Set(result.rows.map((c) => c.nombre.toLowerCase()))
-  const fallbackOnly = fallbackCategories.filter((c) => !dbNames.has(c.nombre.toLowerCase()))
-  return [...fallbackOnly, ...result.rows]
+  // Also exclude fallback categories whose ID collides with a DB category.
+  // Supabase uses SERIAL (1, 2, 3...) which overlaps with hardcoded fallback IDs (1-6).
+  const dbIds = new Set(result.rows.map((c) => c.id))
+  const fallbackOnly = fallbackCategories.filter(
+    (c) => !dbNames.has(c.nombre.toLowerCase()) && !dbIds.has(c.id)
+  )
+  return [...result.rows, ...fallbackOnly]
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
@@ -528,11 +533,11 @@ export async function getProductById(id: number): Promise<ProductDetail | null> 
   )
 
   const variants = variantsResult.rows
-  const colors = Array.from(new Set(variants.map((variant) => variant.color).filter(Boolean)))
-  const sizes = Array.from(new Set(variants.map((variant) => variant.talle).filter(Boolean)))
-  const stock = variants.reduce((total, variant) => total + variant.stock, 0)
+  const colors = Array.from(new Set(variants.map((v) => v.color).filter((c): c is string => Boolean(c))))
+  const sizes = Array.from(new Set(variants.map((v) => v.talle).filter((s): s is string => Boolean(s))))
+  const stock = variants.reduce((total, v) => total + v.stock, 0)
   const image =
-    variants.find((variant) => variant.imagen_url)?.imagen_url ||
+    variants.find((v) => v.imagen_url)?.imagen_url ||
     "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=800&fit=crop"
 
   return {

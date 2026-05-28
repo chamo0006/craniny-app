@@ -22,6 +22,8 @@ import {
   Trash2,
   GripVertical,
   Truck,
+  Database,
+  ArrowUpCircle,
 } from "lucide-react"
 import Image from "next/image"
 
@@ -711,6 +713,8 @@ function StockControlSection() {
   const [expandedAddVariant, setExpandedAddVariant] = useState<number | null>(null)
   const [newVariant, setNewVariant] = useState({ talle: "", color: "", stock: 0 })
   const [addingVariant, setAddingVariant] = useState(false)
+  const [confirmDeleteVariant, setConfirmDeleteVariant] = useState<string | null>(null)
+  const [deletingVariant, setDeletingVariant] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -817,6 +821,27 @@ function StockControlSection() {
       alert(err.message)
     } finally {
       setAddingVariant(false)
+    }
+  }
+
+  const deleteVariant = async (variantId: number, productId: number, talle: string, color: string) => {
+    setDeletingVariant(true)
+    try {
+      const params = new URLSearchParams({
+        variantId: String(variantId),
+        productId: String(productId),
+        talle,
+        color,
+      })
+      const res = await fetch(`/api/admin/variants?${params}`, { method: "DELETE" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error ?? "Error al eliminar")
+      setConfirmDeleteVariant(null)
+      load()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setDeletingVariant(false)
     }
   }
 
@@ -1330,6 +1355,37 @@ function StockControlSection() {
                             }`}
                           >
                             <AlertTriangle className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+
+                        {/* Delete variant */}
+                        {confirmDeleteVariant === `${v.id}` ? (
+                          <div className="flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => deleteVariant(v.id, product.id, v.talle, v.color)}
+                              disabled={deletingVariant}
+                              className="text-[11px] font-black text-red-600 hover:text-red-800 disabled:opacity-50"
+                            >
+                              {deletingVariant ? <RefreshCw className="h-3 w-3 animate-spin inline" /> : "Sí"}
+                            </button>
+                            <span className="text-slate-300 text-xs">·</span>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteVariant(null)}
+                              className="text-[11px] font-semibold text-slate-500 hover:text-slate-700"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteVariant(`${v.id}`)}
+                            className="rounded-lg p-1 text-slate-200 transition hover:bg-red-50 hover:text-red-400 shrink-0"
+                            title="Eliminar esta variante"
+                          >
+                            <X className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
@@ -1914,6 +1970,9 @@ function SettingsSection() {
         </SectionCard>
       )}
 
+      {/* ── Migration to DB ── */}
+      <MigrationSection />
+
       {toast && (
         <div className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"}`}>
           {toast.type === "ok" ? <Check className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
@@ -1921,6 +1980,159 @@ function SettingsSection() {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── MIGRATION SECTION ───────────────────────────────────────────────────────
+
+type MigrationResult = { name: string; status: string; newId?: number; error?: string }
+type MigrationPreview = { pending: { id: number; nombre: string }[]; already: { id: number; nombre: string }[]; total: number }
+
+function MigrationSection() {
+  const [preview, setPreview] = useState<MigrationPreview | null>(null)
+  const [previewing, setPreviewing] = useState(false)
+  const [migrating, setMigrating] = useState(false)
+  const [results, setResults] = useState<MigrationResult[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadPreview = async () => {
+    setPreviewing(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/admin/migrate")
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error ?? "Error al consultar")
+      setPreview(data)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
+  const runMigration = async () => {
+    setMigrating(true)
+    setError(null)
+    setResults(null)
+    try {
+      const res = await fetch("/api/admin/migrate", { method: "POST" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error ?? "Error al migrar")
+      setResults(data.results)
+      setPreview(null)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setMigrating(false)
+    }
+  }
+
+  return (
+    <SectionCard title="Migración a base de datos">
+      <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+        <Database className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
+        <p className="text-xs text-blue-700 font-medium">
+          Migrá todos los productos locales (hardcodeados y guardados en archivos) a Supabase. Después de migrar, podés eliminar y editar todo desde el panel sin errores.
+        </p>
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+          <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+          <p className="text-xs text-red-700">{error}</p>
+        </div>
+      )}
+
+      {!preview && !results && (
+        <button
+          type="button"
+          onClick={loadPreview}
+          disabled={previewing}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50"
+        >
+          {previewing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+          {previewing ? "Verificando..." : "Ver qué se va a migrar"}
+        </button>
+      )}
+
+      {preview && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3 text-center">
+              <p className="text-2xl font-bold text-blue-700">{preview.pending.length}</p>
+              <p className="text-xs text-blue-500 mt-0.5">Por migrar</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 text-center">
+              <p className="text-2xl font-bold text-emerald-700">{preview.already.length}</p>
+              <p className="text-xs text-emerald-500 mt-0.5">Ya en DB</p>
+            </div>
+          </div>
+
+          {preview.pending.length > 0 && (
+            <div className="rounded-2xl border border-slate-100 bg-white p-3 space-y-1">
+              <p className="text-xs font-semibold text-slate-500 mb-2">Se van a migrar:</p>
+              {preview.pending.map((p) => (
+                <div key={p.id} className="flex items-center gap-2">
+                  <ArrowUpCircle className="h-3 w-3 text-blue-400 shrink-0" />
+                  <span className="text-xs text-slate-700">{p.nombre}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={runMigration}
+              disabled={migrating || preview.pending.length === 0}
+              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+            >
+              {migrating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ArrowUpCircle className="h-4 w-4" />}
+              {migrating ? "Migrando..." : preview.pending.length === 0 ? "Todo migrado" : `Migrar ${preview.pending.length} producto${preview.pending.length !== 1 ? "s" : ""}`}
+            </button>
+            <button type="button" onClick={() => setPreview(null)} className="rounded-full border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:border-slate-400 transition">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {results && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 text-center">
+              <p className="text-2xl font-bold text-emerald-700">{results.filter((r) => r.status === "migrated").length}</p>
+              <p className="text-xs text-emerald-500 mt-0.5">Migrados</p>
+            </div>
+            <div className={`rounded-2xl border p-3 text-center ${results.some((r) => r.status === "error") ? "border-red-100 bg-red-50" : "border-slate-100 bg-white"}`}>
+              <p className={`text-2xl font-bold ${results.some((r) => r.status === "error") ? "text-red-700" : "text-slate-400"}`}>{results.filter((r) => r.status === "error").length}</p>
+              <p className={`text-xs mt-0.5 ${results.some((r) => r.status === "error") ? "text-red-400" : "text-slate-400"}`}>Errores</p>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-slate-100 bg-white p-3 space-y-1 max-h-48 overflow-y-auto">
+            {results.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                {r.status === "migrated" ? (
+                  <Check className="h-3 w-3 text-emerald-500 shrink-0" />
+                ) : r.status === "error" ? (
+                  <AlertCircle className="h-3 w-3 text-red-500 shrink-0" />
+                ) : (
+                  <span className="h-3 w-3 shrink-0 inline-block rounded-full bg-slate-200" />
+                )}
+                <span className="text-xs text-slate-700 truncate">{r.name}</span>
+                {r.status === "error" && <span className="text-xs text-red-500 truncate">{r.error}</span>}
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-emerald-600 font-semibold">
+            ✓ Migración completada. Ahora podés eliminar y editar todos los productos desde el panel.
+          </p>
+          <button type="button" onClick={() => { setResults(null); loadPreview() }} className="text-xs text-slate-400 underline">
+            Ver estado actual
+          </button>
+        </div>
+      )}
+    </SectionCard>
   )
 }
 

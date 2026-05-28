@@ -61,11 +61,11 @@ export async function POST(req: Request) {
     try {
       let categoriaId: number | null = null
       if (categoria) {
-        const catRes = await query('SELECT id FROM categorias WHERE nombre = $1 LIMIT 1', [categoria])
+        const catRes = await query<{ id: number }>('SELECT id FROM categorias WHERE nombre = $1 LIMIT 1', [categoria])
         if (catRes.rows[0]) {
           categoriaId = catRes.rows[0].id
         } else {
-          const insertCat = await query('INSERT INTO categorias (nombre) VALUES ($1) RETURNING id', [categoria])
+          const insertCat = await query<{ id: number }>('INSERT INTO categorias (nombre) VALUES ($1) RETURNING id', [categoria])
           categoriaId = insertCat.rows[0].id
         }
       }
@@ -216,19 +216,34 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ ok: true, mode: "fallback" })
     }
 
-    let deletedFromDb = false
-
-    if (!isSavedId(id)) {
-      // Only query the DB when ID fits in PG INTEGER
-      await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
-      const prodRes = await query("DELETE FROM productos WHERE id = $1", [id])
-      deletedFromDb = (prodRes.rowCount ?? 0) > 0
+    // Timestamp IDs (> PG_INT_MAX) are saved-file products not yet in the DB.
+    // They must be migrated first via /api/admin/migrate.
+    if (isSavedId(id)) {
+      const result = await deleteFromSavedFile(id)
+      if (result === "readonly") {
+        return NextResponse.json(
+          { error: "Este producto todavía no está en la base de datos. Andá a Configuración → Migración y migrá los productos primero. Después podrás eliminarlos normalmente." },
+          { status: 422 }
+        )
+      }
+      if (result === "not_found") {
+        return NextResponse.json({ error: "Producto no encontrado." }, { status: 404 })
+      }
+      return NextResponse.json({ ok: true, mode: "saved-file" })
     }
 
-    // Always also try to remove from saved-products.json (covers timestamp IDs and fallback-mode products)
+    // Normal DB delete (ID fits in PG INTEGER)
+    await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
+    const prodRes = await query("DELETE FROM productos WHERE id = $1", [id])
+    const deletedFromDb = (prodRes.rowCount ?? 0) > 0
+
+    // Also clean up from saved-products.json in case product was created in fallback mode
     await deleteFromSavedFile(id)
 
-    return NextResponse.json({ ok: true, mode: deletedFromDb ? "db" : "saved-file" })
+    if (!deletedFromDb) {
+      return NextResponse.json({ error: "Producto no encontrado en la base de datos." }, { status: 404 })
+    }
+    return NextResponse.json({ ok: true, mode: "db" })
   } catch (err: any) {
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
