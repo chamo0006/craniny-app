@@ -218,7 +218,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       {/* ── Global cart sheet — rendered once, accessible from any page ── */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent className="flex w-full flex-col border-slate-200 bg-white text-slate-900 sm:max-w-md">
+        <SheetContent className="flex flex-col border-slate-200 bg-white text-slate-900 sm:max-w-md">
           <SheetHeader className="border-b border-slate-200 pb-4">
             <SheetTitle className="text-lg font-black tracking-widest text-slate-900">
               TU CARRITO

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingBag, Menu, Video, Instagram, MessageCircle, Mail, Music } from "lucide-react"
+import { ShoppingBag, Menu, X, Video, MessageCircle, Mail, Music } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
@@ -41,6 +41,15 @@ export default function CraninyStore() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [maxPrice, setMaxPrice] = useState<number>(500000)
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
+  }, [isMobileMenuOpen])
 
   useEffect(() => {
     fetch("/api/products")
@@ -152,20 +161,40 @@ export default function CraninyStore() {
           </div>
         </div>
 
-        {/* Menú Desplegable Celular */}
-        {isMobileMenuOpen && (
-          <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden animate-in fade-in duration-200">
-            <nav className="flex flex-col gap-2">
-              <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-left py-2.5 text-sm font-bold tracking-wider text-slate-700">INICIO</Link>
-              <Link href="/productos" onClick={() => setIsMobileMenuOpen(false)} className="text-left py-2.5 text-sm font-bold tracking-wider text-slate-700">PRODUCTOS</Link>
-              <Link href="/#how-to-buy" onClick={() => setIsMobileMenuOpen(false)} className="py-2.5 text-sm font-bold text-slate-700">COMO COMPRAR</Link>
-              <Link href="/#about" onClick={() => setIsMobileMenuOpen(false)} className="py-2.5 text-sm font-bold text-slate-700">QUIENES SOMOS</Link>
-              <Link href="/#contact" onClick={() => setIsMobileMenuOpen(false)} className="py-2.5 text-sm font-bold text-slate-700">CONTACTO</Link>
-              {/* LOGIN — habilitarlo cuando esté listo: /admin/login */}
-            </nav>
-          </div>
-        )}
       </header>
+
+      {/* Mobile drawer overlay */}
+      <div
+        className={`fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 md:hidden ${
+          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      {/* Mobile slide-in drawer */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 flex w-[72%] max-w-xs flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
+          <Logo onClick={() => { resetFilters(); setIsMobileMenuOpen(false) }} />
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+        <nav className="flex flex-col overflow-y-auto py-3">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">INICIO</Link>
+          <Link href="/productos" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">PRODUCTOS</Link>
+          <Link href="/#how-to-buy" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">COMO COMPRAR</Link>
+          <Link href="/#about" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">QUIENES SOMOS</Link>
+          <Link href="/#contact" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">CONTACTO</Link>
+        </nav>
+      </div>
 
       {/* HERO SECTION */}
       <section className="relative flex min-h-[85vh] items-center justify-center overflow-hidden pt-16 bg-slate-100">
@@ -213,7 +242,7 @@ export default function CraninyStore() {
           </div>
 
           {/* GRILLA PREVIEW DE PRODUCTOS */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
             {products.slice(0, 6).map((product) => (
               <Card key={product.id} className={`group overflow-hidden border border-slate-200 hover:border-slate-300 transition transform hover:-translate-y-1 hover:shadow-lg`}>
                 <Link href={`/productos/${categorySlug(product.category)}/${product.id}`} className="relative block aspect-[4/5] overflow-hidden bg-slate-100">
@@ -324,23 +353,27 @@ export default function CraninyStore() {
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <p className="text-xs font-black tracking-[0.3em] text-slate-500 uppercase mb-2">Soporte</p>
           <h3 className="text-2xl font-black text-slate-900 uppercase mb-8">CANALES DE CONTACTO</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <a href="https://instagram.com/craniny.ar" target="_blank" className="flex flex-col items-center p-5 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
-              <Instagram className="size-6 text-slate-500 mb-2" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="https://instagram.com/craniny.ar" target="_blank" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
+              <svg className="size-6 text-slate-500 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="0.1" fill="currentColor" strokeWidth="3"/>
+              </svg>
               <span className="text-xs font-bold uppercase text-slate-900">Instagram</span>
               <span className="text-[11px] text-slate-500 mt-1">@craniny.ar</span>
             </a>
-            <a href="https://wa.me/5491121615661" target="_blank" className="flex flex-col items-center p-5 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
+            <a href="https://wa.me/5491121615661" target="_blank" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
               <MessageCircle className="size-6 text-slate-500 mb-2" />
               <span className="text-xs font-bold uppercase text-slate-900">WhatsApp</span>
-              <span className="text-[11px] text-slate-500 mt-1">+54 9 11 216-15661</span>
+              <span className="text-[11px] text-slate-500 mt-1">+54 9 11 2161-5661</span>
             </a>
-            <a href="https://tiktok.com/@craniny.ar" target="_blank" className="flex flex-col items-center p-5 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
+            <a href="https://tiktok.com/@craniny.ar" target="_blank" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
               <Music className="size-6 text-slate-500 mb-2" />
               <span className="text-xs font-bold uppercase text-slate-900">TikTok</span>
               <span className="text-[11px] text-slate-500 mt-1">@craniny.ar</span>
             </a>
-            <a href="mailto:info@craniny.com" className="flex flex-col items-center p-5 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
+            <a href="mailto:contacto@craniny.com" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
               <Mail className="size-6 text-slate-500 mb-2" />
               <span className="text-xs font-bold uppercase text-slate-900">Email</span>
               <span className="text-[11px] text-slate-500 mt-1">contacto@craniny.com</span>

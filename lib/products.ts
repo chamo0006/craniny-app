@@ -273,7 +273,7 @@ export async function getProducts(): Promise<ProductListItem[]> {
         imagen_url: v.imagen_url || null,
       }))
       const { nombre, variants: metaVariants } = applyProductMeta(p.id, p.nombre, rawVariants, metaOverrides)
-      const item = buildProductListItem({ ...p, nombre }, withOverrides(metaVariants))
+      const item = buildProductListItem({ ...p, nombre, category: p.category ?? null }, withOverrides(metaVariants))
       return { ...item, price: priceOverrides[p.id] ?? item.price }
     })
     const items = [
@@ -328,7 +328,7 @@ export async function getProducts(): Promise<ProductListItem[]> {
       stock: v.stock || 0,
       imagen_url: v.imagen_url || null,
     }))
-    return buildProductListItem(p, savedVariants)
+    return buildProductListItem({ ...p, category: p.category ?? null }, savedVariants)
   })
 
   return dedupeProductsByImagePerCategory([...fallbackItems, ...dbItems, ...savedItems])
@@ -370,7 +370,7 @@ export async function getProductsByCategorySlug(slug: string): Promise<ProductLi
               }))
             : fallbackVariants.filter((v) => v.producto_id === product.id)
         const { nombre, variants } = applyProductMeta(product.id, product.nombre, withOverrides(rawVariants), metaOverrides)
-        return buildProductListItem({ ...(product as SavedProduct), nombre }, variants)
+        return buildProductListItem({ ...(product as SavedProduct), nombre, category: (product as SavedProduct).category ?? null }, variants)
       })
     )
   }
@@ -486,8 +486,8 @@ export async function getProductById(id: number): Promise<ProductDetail | null> 
     const fallback = fallbackProducts.find((p) => p.id === id)
     if (!fallback) return null
     const rawVariants = fallbackVariants.filter((v) => v.producto_id === id)
-    const colors = Array.from(new Set(rawVariants.map((v) => v.color).filter(Boolean)))
-    const sizes = Array.from(new Set(rawVariants.map((v) => v.talle).filter(Boolean)))
+    const colors: string[] = Array.from(new Set(rawVariants.map((v) => v.color).filter((x): x is string => !!x)))
+    const sizes: string[] = Array.from(new Set(rawVariants.map((v) => v.talle).filter((x): x is string => !!x)))
     const stock = rawVariants.reduce((t, v) => t + v.stock, 0)
     const image = rawVariants.find((v) => v.imagen_url)?.imagen_url ||
       "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=800&fit=crop"
