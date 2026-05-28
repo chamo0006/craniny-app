@@ -21,21 +21,29 @@ async function saveSaved(arr: unknown[]) {
   await fs.writeFile(SAVED_FILE, JSON.stringify(arr, null, 2), "utf8")
 }
 
+type CheckoutItem = {
+  id: number
+  nombre?: string
+  price?: number
+  selectedSize?: string | null
+  selectedColor?: string | null
+  quantity: number
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const items: Array<{
-      id: number
-      selectedSize?: string | null
-      selectedColor?: string | null
-      quantity: number
-    }> = body.items || []
+    const items: CheckoutItem[] = body.items || []
+    const nombre_cliente: string | null = body.nombre_cliente || null
+    const telefono_cliente: string | null = body.telefono_cliente || null
+    const total: number = body.total || 0
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "No hay items" }, { status: 400 })
     }
 
     if (!process.env.DATABASE_URL) {
+      // Fallback: decrement stock in local files
       await decrementStockOverrides(items, getFallbackBaseStock)
 
       const saved = await loadSaved()
@@ -43,14 +51,15 @@ export async function POST(req: Request) {
         const prod = saved.find((p: { id: number }) => p.id === it.id)
         if (!prod || !Array.isArray(prod.variants)) continue
         const variant = prod.variants.find(
-          (v: { talle?: string; color?: string; stock?: number }) =>
-            (v.talle || "") === (it.selectedSize || "") && (v.color || "") === (it.selectedColor || "")
+          (v: { talle?: string; color?: string }) =>
+            (v.talle || "") === (it.selectedSize || "") &&
+            (v.color || "") === (it.selectedColor || "")
         )
         if (variant) {
           variant.stock = Math.max(0, (variant.stock || 0) - it.quantity)
         } else {
           const bySize = prod.variants.find(
-            (v: { talle?: string; stock?: number }) => (v.talle || "") === (it.selectedSize || "")
+            (v: { talle?: string }) => (v.talle || "") === (it.selectedSize || "")
           )
           if (bySize) {
             bySize.stock = Math.max(0, (bySize.stock || 0) - it.quantity)
@@ -61,12 +70,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, fallback: true })
     }
 
+    // DB mode
     try {
       await query("BEGIN")
+
+      // 1. Decrement stock for each item
       const updated: Array<{ variantId: number; stock: number }> = []
       for (const it of items) {
         const res = await query<{ id: number; stock: number }>(
-          `SELECT id, stock FROM variantes_producto WHERE producto_id = $1 AND COALESCE(talle, '') = COALESCE($2, '') AND COALESCE(color, '') = COALESCE($3, '') LIMIT 1`,
+          `SELECT id, stock FROM variantes_producto
+           WHERE producto_id = $1
+             AND COALESCE(talle, '') = COALESCE($2, '')
+             AND COALESCE(color, '') = COALESCE($3, '')
+           LIMIT 1`,
           [it.id, it.selectedSize || "", it.selectedColor || ""]
         )
         const variant = res.rows[0]
@@ -76,7 +92,10 @@ export async function POST(req: Request) {
           updated.push({ variantId: variant.id, stock: newStock })
         } else {
           const r2 = await query<{ id: number; stock: number }>(
-            `SELECT id, stock FROM variantes_producto WHERE producto_id = $1 AND COALESCE(talle, '') = COALESCE($2, '') LIMIT 1`,
+            `SELECT id, stock FROM variantes_producto
+             WHERE producto_id = $1
+               AND COALESCE(talle, '') = COALESCE($2, '')
+             LIMIT 1`,
             [it.id, it.selectedSize || ""]
           )
           const v2 = r2.rows[0]
@@ -87,8 +106,38 @@ export async function POST(req: Request) {
           }
         }
       }
+
+      // 2. Save order
+      const orderRes = await query<{ id: number }>(
+        `INSERT INTO pedidos (estado, total, nombre_cliente, telefono_cliente)
+         VALUES ('pendiente', $1, $2, $3)
+         RETURNING id`,
+        [total, nombre_cliente, telefono_cliente]
+      )
+      const orderId = orderRes.rows[0]?.id
+
+      // 3. Save order items
+      if (orderId) {
+        for (const it of items) {
+          await query(
+            `INSERT INTO pedido_items
+               (pedido_id, producto_id, nombre_producto, talle, color, cantidad, precio_unitario)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              orderId,
+              it.id,
+              it.nombre || "Producto",
+              it.selectedSize || "",
+              it.selectedColor || "",
+              it.quantity,
+              it.price || 0,
+            ]
+          )
+        }
+      }
+
       await query("COMMIT")
-      return NextResponse.json({ ok: true, updated })
+      return NextResponse.json({ ok: true, orderId, updated })
     } catch (dbErr) {
       await query("ROLLBACK")
       return NextResponse.json({ ok: false, error: String(dbErr) }, { status: 500 })

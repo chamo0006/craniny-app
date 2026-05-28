@@ -24,6 +24,16 @@ import {
   Truck,
   Database,
   ArrowUpCircle,
+  LayoutDashboard,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+  Clock,
+  CheckCircle,
+  SendHorizontal,
+  XCircle,
+  ChevronRight,
+  Phone,
 } from "lucide-react"
 import Image from "next/image"
 
@@ -49,7 +59,10 @@ type StockProduct = {
   imagenes?: string[]
 }
 type StockFilter = "all" | "out" | "low"
-type AdminTab = "nuevo" | "stock" | "categorias" | "colores" | "config"
+type AdminTab = "dashboard" | "nuevo" | "stock" | "pedidos" | "categorias" | "colores" | "config"
+type OrderStatus = "pendiente" | "pagado" | "enviado" | "cancelado"
+type OrderItem = { id: number; nombre_producto: string; talle: string | null; color: string | null; cantidad: number; precio_unitario: number }
+type Order = { id: number; created_at: string; estado: OrderStatus; total: number; nombre_cliente: string | null; telefono_cliente: string | null; notas: string | null; items: OrderItem[] }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -2264,6 +2277,355 @@ function ColoresSection() {
   )
 }
 
+// ─── DASHBOARD SECTION ───────────────────────────────────────────────────────
+
+type DashboardData = {
+  totalProducts: number
+  totalVariants: number
+  outOfStockVariants: number
+  lowStockVariants: Array<{ productName: string; color: string; talle: string; stock: number }>
+  totalOrders: number
+  pendingOrders: number
+  totalRevenue: number
+  recentOrders: Array<{ id: number; created_at: string; estado: string; total: number; nombre_cliente: string | null }>
+}
+
+function DashboardSection() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/admin/dashboard")
+      .then((r) => r.json())
+      .then((d) => setData(d))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-24"><RefreshCw className="h-6 w-6 animate-spin text-slate-300" /></div>
+  }
+  if (!data) return null
+
+  const fmt = (n: number) => `$ ${new Intl.NumberFormat("es-AR").format(Math.round(n))}`
+
+  const statusConfig = {
+    pendiente: { label: "Pendiente", cls: "bg-amber-100 text-amber-700" },
+    pagado: { label: "Pagado", cls: "bg-emerald-100 text-emerald-700" },
+    enviado: { label: "Enviado", cls: "bg-blue-100 text-blue-700" },
+    cancelado: { label: "Cancelado", cls: "bg-red-100 text-red-700" },
+  } as Record<string, { label: string; cls: string }>
+
+  return (
+    <div className="space-y-5">
+      {/* Metric cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <Package className="h-4 w-4 text-slate-400" />
+            <span className="text-xs text-slate-400">Productos</span>
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{data.totalProducts}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{data.totalVariants} variantes</p>
+        </div>
+
+        <div className={`rounded-2xl border p-4 shadow-sm ${data.outOfStockVariants > 0 ? "border-red-100 bg-red-50" : "border-slate-100 bg-white"}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className={`h-4 w-4 ${data.outOfStockVariants > 0 ? "text-red-400" : "text-slate-300"}`} />
+            <span className={`text-xs ${data.outOfStockVariants > 0 ? "text-red-400" : "text-slate-400"}`}>Sin stock</span>
+          </div>
+          <p className={`text-2xl font-bold ${data.outOfStockVariants > 0 ? "text-red-600" : "text-slate-300"}`}>{data.outOfStockVariants}</p>
+          <p className={`text-xs mt-0.5 ${data.outOfStockVariants > 0 ? "text-red-400" : "text-slate-400"}`}>variantes agotadas</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <ShoppingCart className="h-4 w-4 text-slate-400" />
+            <span className="text-xs text-slate-400">Pedidos</span>
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{data.totalOrders}</p>
+          {data.pendingOrders > 0 && <p className="text-xs text-amber-500 mt-0.5">{data.pendingOrders} pendientes</p>}
+        </div>
+
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            <span className="text-xs text-emerald-600">Ventas</span>
+          </div>
+          <p className="text-xl font-bold text-emerald-700">{fmt(data.totalRevenue)}</p>
+          <p className="text-xs text-emerald-500 mt-0.5">total acumulado</p>
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        {/* Low stock alert */}
+        {data.lowStockVariants.length > 0 && (
+          <SectionCard title="Últimas unidades">
+            <div className="space-y-2">
+              {data.lowStockVariants.map((v, i) => (
+                <div key={i} className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50 px-3 py-2">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-800">{v.productName}</p>
+                    <p className="text-xs text-slate-500">{v.color} · {v.talle}</p>
+                  </div>
+                  <span className="rounded-full bg-orange-200 px-2 py-0.5 text-xs font-bold text-orange-800">{v.stock} uds</span>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        )}
+
+        {/* Recent orders */}
+        {data.recentOrders.length > 0 && (
+          <SectionCard title="Pedidos recientes">
+            <div className="space-y-2">
+              {data.recentOrders.map((o) => {
+                const s = statusConfig[o.estado] ?? { label: o.estado, cls: "bg-slate-100 text-slate-600" }
+                return (
+                  <div key={o.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-white px-3 py-2">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-800">{o.nombre_cliente || "Cliente anónimo"}</p>
+                      <p className="text-xs text-slate-400">{fmt(o.total)} · #{o.id}</p>
+                    </div>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${s.cls}`}>{s.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </SectionCard>
+        )}
+
+        {data.recentOrders.length === 0 && data.lowStockVariants.length === 0 && (
+          <div className="col-span-2 rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
+            <LayoutDashboard className="mx-auto h-8 w-8 text-slate-300" />
+            <p className="mt-2 text-sm text-slate-400">Todo en orden. No hay alertas activas.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── PEDIDOS SECTION ──────────────────────────────────────────────────────────
+
+function PedidosSection() {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [saving, setSaving] = useState<number | null>(null)
+  const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [filterStatus, setFilterStatus] = useState<OrderStatus | "todos">("todos")
+
+  const showToast = (msg: string, type: "ok" | "err") => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/orders")
+      if (res.ok) {
+        const d = await res.json()
+        setOrders(d.orders || [])
+      }
+    } catch {}
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const updateStatus = async (id: number, estado: OrderStatus) => {
+    setSaving(id)
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, estado }),
+      })
+      if (!res.ok) throw new Error("Error al actualizar")
+      setOrders((prev) => prev.map((o) => o.id === id ? { ...o, estado } : o))
+      showToast("Estado actualizado.", "ok")
+    } catch (err: any) {
+      showToast(err.message, "err")
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const deleteOrder = async (id: number) => {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/orders?id=${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Error al eliminar")
+      setConfirmDelete(null)
+      setOrders((prev) => prev.filter((o) => o.id !== id))
+      showToast("Pedido eliminado.", "ok")
+    } catch (err: any) {
+      showToast(err.message, "err")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const fmt = (n: number) => `$ ${new Intl.NumberFormat("es-AR").format(Math.round(n))}`
+  const fmtDate = (s: string) => new Date(s).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+
+  const statusConfig: Record<OrderStatus, { label: string; cls: string; icon: React.ReactNode }> = {
+    pendiente: { label: "Pendiente", cls: "bg-amber-100 text-amber-700 border-amber-200", icon: <Clock className="h-3 w-3" /> },
+    pagado: { label: "Pagado", cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: <CheckCircle className="h-3 w-3" /> },
+    enviado: { label: "Enviado", cls: "bg-blue-100 text-blue-700 border-blue-200", icon: <SendHorizontal className="h-3 w-3" /> },
+    cancelado: { label: "Cancelado", cls: "bg-red-100 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3" /> },
+  }
+
+  const filtered = filterStatus === "todos" ? orders : orders.filter((o) => o.estado === filterStatus)
+
+  if (loading) return <div className="flex items-center justify-center py-24"><RefreshCw className="h-6 w-6 animate-spin text-slate-300" /></div>
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL && orders.length === 0) {
+    return (
+      <SectionCard title="Pedidos">
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
+          <ShoppingCart className="mx-auto h-8 w-8 text-slate-300" />
+          <p className="mt-2 text-sm text-slate-500 font-medium">Los pedidos se guardan automáticamente cuando los clientes confirman por WhatsApp.</p>
+          <p className="mt-1 text-xs text-slate-400">Asegurate de tener Supabase configurado para ver el historial aquí.</p>
+        </div>
+      </SectionCard>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Stats + filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(["todos", "pendiente", "pagado", "enviado", "cancelado"] as const).map((s) => {
+          const count = s === "todos" ? orders.length : orders.filter((o) => o.estado === s).length
+          const cfg = s === "todos" ? null : statusConfig[s]
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setFilterStatus(s)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                filterStatus === s ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+              }`}
+            >
+              {s === "todos" ? "Todos" : cfg?.label} · {count}
+            </button>
+          )
+        })}
+        <button type="button" onClick={load} className="ml-auto rounded-full border border-slate-200 bg-white p-2 text-slate-400 hover:text-slate-700 transition">
+          <RefreshCw className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
+          <PackageCheck className="mx-auto h-8 w-8 text-slate-200" />
+          <p className="mt-2 text-sm text-slate-400">No hay pedidos con ese filtro.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((order) => {
+            const s = statusConfig[order.estado]
+            const isExpanded = expandedId === order.id
+            return (
+              <div key={order.id} className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm">
+                {/* Order header */}
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                    className="flex-1 flex items-center gap-3 text-left"
+                  >
+                    <ChevronRight className={`h-4 w-4 shrink-0 text-slate-300 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-slate-900">{order.nombre_cliente || "Cliente anónimo"}</span>
+                        <span className="text-xs text-slate-400">#{order.id}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {order.telefono_cliente && (
+                          <span className="flex items-center gap-1 text-xs text-slate-400">
+                            <Phone className="h-3 w-3" />{order.telefono_cliente}
+                          </span>
+                        )}
+                        <span className="text-xs text-slate-400">{fmtDate(order.created_at)}</span>
+                      </div>
+                    </div>
+                    <span className="ml-auto text-sm font-bold text-slate-900 shrink-0">{fmt(order.total)}</span>
+                  </button>
+
+                  {/* Status selector */}
+                  <div className="relative shrink-0">
+                    <select
+                      value={order.estado}
+                      disabled={saving === order.id}
+                      onChange={(e) => updateStatus(order.id, e.target.value as OrderStatus)}
+                      className={`appearance-none rounded-full border px-2.5 py-1 text-xs font-semibold cursor-pointer transition ${s.cls} disabled:opacity-50`}
+                    >
+                      <option value="pendiente">Pendiente</option>
+                      <option value="pagado">Pagado</option>
+                      <option value="enviado">Enviado</option>
+                      <option value="cancelado">Cancelado</option>
+                    </select>
+                  </div>
+
+                  {/* Delete */}
+                  {confirmDelete === order.id ? (
+                    <div className="flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1 shrink-0">
+                      <button type="button" onClick={() => deleteOrder(order.id)} disabled={deleting}
+                        className="text-[11px] font-black text-red-600 hover:text-red-800 disabled:opacity-50">
+                        {deleting ? <RefreshCw className="h-3 w-3 animate-spin inline" /> : "Sí"}
+                      </button>
+                      <span className="text-slate-300 text-xs">·</span>
+                      <button type="button" onClick={() => setConfirmDelete(null)} className="text-[11px] text-slate-500 hover:text-slate-700">No</button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setConfirmDelete(order.id)}
+                      className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-400 transition shrink-0">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Order items (expanded) */}
+                {isExpanded && (
+                  <div className="border-t border-slate-50 bg-slate-50/50 px-4 py-3 space-y-2">
+                    {order.items.length === 0 ? (
+                      <p className="text-xs text-slate-400">Sin detalle de productos.</p>
+                    ) : (
+                      order.items.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between text-xs">
+                          <span className="text-slate-700 font-medium">{item.nombre_producto}</span>
+                          <div className="flex items-center gap-3 text-slate-500">
+                            <span>{item.color} · {item.talle}</span>
+                            <span>x{item.cantidad}</span>
+                            <span className="font-semibold text-slate-700">{fmt(item.precio_unitario * item.cantidad)}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {toast && (
+        <div className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"}`}>
+          {toast.type === "ok" ? <Check className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+          {toast.msg}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Tab button ───────────────────────────────────────────────────────────────
 
 function TabBtn({
@@ -2297,23 +2659,19 @@ export default function AdminProductForm() {
 
   return (
     <div className="space-y-7">
-      {/* Tabs */}
-      <div className="grid grid-cols-3 sm:flex gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1 w-full sm:w-fit">
+      {/* Tabs — 4 cols on mobile, flex on desktop */}
+      <div className="grid grid-cols-4 sm:flex gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1 w-full sm:w-fit">
+        <TabBtn active={tab === "dashboard"} onClick={() => setTab("dashboard")}>Panel</TabBtn>
         <TabBtn active={tab === "nuevo"} onClick={() => setTab("nuevo")}>
           <span className="sm:hidden">Nuevo</span>
           <span className="hidden sm:inline">Nuevo producto</span>
         </TabBtn>
-        <TabBtn active={tab === "stock"} onClick={() => setTab("stock")}>
-          Stock
-        </TabBtn>
-        <TabBtn active={tab === "categorias"} onClick={() => setTab("categorias")}>
-          Categorías
-        </TabBtn>
-        {/* Last 2 tabs: span full row on mobile (col-span-3), invisible wrapper on desktop */}
-        <div className="col-span-3 sm:contents flex gap-1">
-          <TabBtn active={tab === "colores"} onClick={() => setTab("colores")}>
-            Colores
-          </TabBtn>
+        <TabBtn active={tab === "stock"} onClick={() => setTab("stock")}>Stock</TabBtn>
+        <TabBtn active={tab === "pedidos"} onClick={() => setTab("pedidos")}>Pedidos</TabBtn>
+        {/* Last 3: span 4 cols on mobile */}
+        <div className="col-span-4 sm:contents flex gap-1">
+          <TabBtn active={tab === "categorias"} onClick={() => setTab("categorias")}>Categ.</TabBtn>
+          <TabBtn active={tab === "colores"} onClick={() => setTab("colores")}>Colores</TabBtn>
           <TabBtn active={tab === "config"} onClick={() => setTab("config")}>
             <span className="sm:hidden">Config</span>
             <span className="hidden sm:inline">Configuración</span>
@@ -2321,8 +2679,10 @@ export default function AdminProductForm() {
         </div>
       </div>
 
+      {tab === "dashboard" && <DashboardSection />}
       {tab === "nuevo" && <NewProductSection />}
       {tab === "stock" && <StockControlSection />}
+      {tab === "pedidos" && <PedidosSection />}
       {tab === "categorias" && <CategoriesSection />}
       {tab === "colores" && <ColoresSection />}
       {tab === "config" && <SettingsSection />}

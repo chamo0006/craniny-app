@@ -66,6 +66,33 @@ CREATE TABLE IF NOT EXISTS product_meta (
   imagen_url TEXT,
   imagenes   TEXT[] DEFAULT '{}'
 );
+
+-- Pedidos (órdenes de clientes)
+CREATE TABLE IF NOT EXISTS pedidos (
+  id                SERIAL PRIMARY KEY,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  estado            TEXT NOT NULL DEFAULT 'pendiente'
+                      CHECK (estado IN ('pendiente','pagado','enviado','cancelado')),
+  total             NUMERIC NOT NULL DEFAULT 0,
+  nombre_cliente    TEXT,
+  telefono_cliente  TEXT,
+  notas             TEXT
+);
+
+-- Items de pedidos
+CREATE TABLE IF NOT EXISTS pedido_items (
+  id               SERIAL PRIMARY KEY,
+  pedido_id        INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+  producto_id      INTEGER,
+  nombre_producto  TEXT NOT NULL,
+  talle            TEXT,
+  color            TEXT,
+  cantidad         INTEGER NOT NULL DEFAULT 1,
+  precio_unitario  NUMERIC NOT NULL DEFAULT 0
+);
+
+-- Índice para búsqueda rápida por pedido
+CREATE INDEX IF NOT EXISTS idx_pedido_items_pedido_id ON pedido_items(pedido_id);
 ```
 
 ## 4. Supabase Storage (imágenes)

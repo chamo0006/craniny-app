@@ -176,10 +176,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const openCart = useCallback(() => setIsOpen(true), [])
   const closeCart = useCallback(() => setIsOpen(false), [])
 
-  const handleCheckout = () => {
-    if (items.length === 0) return
+  const [showForm, setShowForm] = useState(false)
+  const [clientName, setClientName] = useState("")
+  const [clientPhone, setClientPhone] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  const buildWhatsAppMsg = (name: string) => {
     const phoneNumber = "5491121615661"
     let msg = "🛒 *CRANINY - PEDIDO NUEVO*\n━━━━━━━━━━━━━━━━━━━━━\n\n"
+    if (name) msg += `👤 *Cliente: ${name}*\n\n`
     items.forEach((item, idx) => {
       msg += `*${idx + 1}. ${item.name}*\n`
       msg += `   Talle: ${item.selectedSize} | Color: ${item.selectedColor}\n`
@@ -194,8 +199,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     msg += `   Nombre: *Valentin Tomas Motzo*\n`
     msg += `   ‼️ *Enviar comprobante*\n\n`
     msg += "Quedo a la espera para coordinar el envío. ¡Gracias!"
-    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`, "_blank")
+    return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`
+  }
+
+  const handleConfirmOrder = async () => {
+    if (items.length === 0) return
+    setSubmitting(true)
+    try {
+      await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            id: i.id,
+            nombre: i.name,
+            price: i.price,
+            selectedSize: i.selectedSize,
+            selectedColor: i.selectedColor,
+            quantity: i.quantity,
+          })),
+          nombre_cliente: clientName.trim() || null,
+          telefono_cliente: clientPhone.trim() || null,
+          total: transferTotal,
+        }),
+      })
+    } catch {}
+    window.open(buildWhatsAppMsg(clientName.trim()), "_blank")
     clearCart()
+    setShowForm(false)
+    setClientName("")
+    setClientPhone("")
+    setSubmitting(false)
   }
 
   return (
@@ -325,25 +359,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 <div className="w-full space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">Total</span>
-                    <span className="text-lg font-black text-slate-900">
-                      {fmt(total)}
-                    </span>
+                    <span className="text-lg font-black text-slate-900">{fmt(total)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-red-600 font-medium">
-                      Con {discountType} ({discountPercent}% off)
-                    </span>
-                    <span className="font-bold text-red-600">
-                      {fmt(transferTotal)}
-                    </span>
+                    <span className="text-red-600 font-medium">Con {discountType} ({discountPercent}% off)</span>
+                    <span className="font-bold text-red-600">{fmt(transferTotal)}</span>
                   </div>
                 </div>
-                <Button
-                  onClick={handleCheckout}
-                  className="w-full bg-emerald-500 font-bold text-slate-900 hover:bg-emerald-400"
-                >
-                  Finalizar pedido por WhatsApp 📱
-                </Button>
+
+                {!showForm ? (
+                  <Button
+                    onClick={() => setShowForm(true)}
+                    className="w-full bg-emerald-500 font-bold text-slate-900 hover:bg-emerald-400"
+                  >
+                    Finalizar pedido por WhatsApp 📱
+                  </Button>
+                ) : (
+                  <div className="w-full space-y-3">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tus datos (opcional)</p>
+                    <input
+                      type="text"
+                      placeholder="Tu nombre"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:bg-white"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Tu teléfono (ej: 1134567890)"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:bg-white"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowForm(false)}
+                        className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                      >
+                        Cancelar
+                      </button>
+                      <Button
+                        onClick={handleConfirmOrder}
+                        disabled={submitting}
+                        className="flex-1 bg-emerald-500 font-bold text-slate-900 hover:bg-emerald-400 disabled:opacity-50"
+                      >
+                        {submitting ? "Enviando..." : "Confirmar 📱"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </SheetFooter>
             </>
           )}
