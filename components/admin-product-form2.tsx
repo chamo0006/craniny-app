@@ -1033,128 +1033,134 @@ function StockControlSection() {
                 className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm"
               >
                 {/* Product header */}
-                <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-50 bg-slate-50/50">
-                  {/* Editable name */}
-                  <input
-                    type="text"
-                    value={nameEdits.get(product.id) ?? product.name}
-                    onChange={(e) => {
-                      setNameEdits((prev) => {
-                        const next = new Map(prev)
-                        next.set(product.id, e.target.value)
-                        return next
-                      })
-                    }}
-                    className={`shrink-0 font-semibold text-sm bg-transparent border-b outline-none transition w-36 min-w-0 ${
-                      nameEdits.has(product.id)
-                        ? "border-amber-300 text-amber-700"
-                        : "border-transparent hover:border-slate-300 text-slate-900"
-                    }`}
-                  />
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500 shrink-0">
-                    {product.category}
-                  </span>
-
-                  {/* Editable price */}
-                  <div className="flex items-center gap-1 ml-auto">
-                    <span className="text-xs text-slate-400 select-none">$</span>
+                <div className="border-b border-slate-50 bg-slate-50/50 px-4 py-3 space-y-2">
+                  {/* Row 1: name + category */}
+                  <div className="flex items-center gap-2 min-w-0">
                     <input
-                      type="number"
-                      min="0"
-                      step="100"
-                      value={priceEdits.get(product.id) ?? product.price}
+                      type="text"
+                      value={nameEdits.get(product.id) ?? product.name}
                       onChange={(e) => {
-                        const v = Math.max(0, Number(e.target.value))
-                        setPriceEdits((prev) => {
+                        setNameEdits((prev) => {
                           const next = new Map(prev)
-                          next.set(product.id, v)
+                          next.set(product.id, e.target.value)
                           return next
                         })
                       }}
-                      className={`w-28 rounded-xl border px-2 py-1 text-right text-sm font-semibold outline-none transition focus:ring-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
-                        priceEdits.has(product.id)
-                          ? "border-amber-300 bg-amber-50 text-amber-700 focus:ring-amber-200"
-                          : "border-slate-200 bg-white text-slate-700 focus:ring-slate-100"
+                      className={`flex-1 min-w-0 font-semibold text-sm bg-transparent border-b outline-none transition ${
+                        nameEdits.has(product.id)
+                          ? "border-amber-300 text-amber-700"
+                          : "border-transparent hover:border-slate-300 text-slate-900"
                       }`}
                     />
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">
+                      {product.category}
+                    </span>
                   </div>
 
-                  {/* Free shipping toggle */}
-                  <button
-                    type="button"
-                    onClick={() => toggleFreeShipping(product.id)}
-                    title={freeShippingIds.has(product.id) ? "Quitar envío gratis" : "Activar envío gratis"}
-                    className={`shrink-0 rounded-lg p-1.5 transition ${
-                      freeShippingIds.has(product.id)
-                        ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
-                        : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
-                    }`}
-                  >
-                    <Truck className="h-4 w-4" />
-                  </button>
-
-                  {/* Add variant toggle */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setExpandedAddVariant(expandedAddVariant === product.id ? null : product.id)
-                      setNewVariant({ talle: "", color: "", stock: 0 })
-                    }}
-                    title="Agregar talle"
-                    className={`shrink-0 rounded-lg p-1.5 transition ${
-                      expandedAddVariant === product.id
-                        ? "bg-blue-100 text-blue-700"
-                        : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
-                    }`}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-
-                  {/* Image edit toggle */}
-                  <button
-                    type="button"
-                    onClick={() => setExpandedImageEdit(expandedImageEdit === product.id ? null : product.id)}
-                    title="Cambiar imagen"
-                    className={`shrink-0 rounded-lg p-1.5 transition ${
-                      expandedImageEdit === product.id
-                        ? "bg-slate-200 text-slate-700"
-                        : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
-                    }`}
-                  >
-                    <ImagePlus className="h-4 w-4" />
-                  </button>
-
-                  {/* Delete product */}
-                  {confirmDelete === product.id ? (
-                    <div className="flex shrink-0 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1">
-                      <span className="text-[11px] font-semibold text-red-600">¿Eliminar?</span>
-                      <button
-                        type="button"
-                        onClick={() => deleteProduct(product.id)}
-                        disabled={deleting}
-                        className="text-[11px] font-black text-red-600 hover:text-red-800 disabled:opacity-50"
-                      >
-                        {deleting ? <RefreshCw className="h-3 w-3 animate-spin" /> : "Sí"}
-                      </button>
-                      <span className="text-slate-300">·</span>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDelete(null)}
-                        className="text-[11px] font-semibold text-slate-500 hover:text-slate-700"
-                      >
-                        No
-                      </button>
+                  {/* Row 2: price + action buttons */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-slate-400 select-none">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={priceEdits.get(product.id) ?? product.price}
+                        onChange={(e) => {
+                          const v = Math.max(0, Number(e.target.value))
+                          setPriceEdits((prev) => {
+                            const next = new Map(prev)
+                            next.set(product.id, v)
+                            return next
+                          })
+                        }}
+                        className={`w-24 rounded-xl border px-2 py-1 text-right text-sm font-semibold outline-none transition focus:ring-1 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                          priceEdits.has(product.id)
+                            ? "border-amber-300 bg-amber-50 text-amber-700 focus:ring-amber-200"
+                            : "border-slate-200 bg-white text-slate-700 focus:ring-slate-100"
+                        }`}
+                      />
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(product.id)}
-                      className="shrink-0 rounded-lg p-1.5 text-slate-300 transition hover:bg-red-50 hover:text-red-500"
-                      title="Eliminar producto"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
+
+                    <div className="ml-auto flex items-center gap-1.5">
+                      {/* Free shipping toggle */}
+                      <button
+                        type="button"
+                        onClick={() => toggleFreeShipping(product.id)}
+                        title={freeShippingIds.has(product.id) ? "Quitar envío gratis" : "Activar envío gratis"}
+                        className={`rounded-lg p-1.5 transition ${
+                          freeShippingIds.has(product.id)
+                            ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                            : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
+                        }`}
+                      >
+                        <Truck className="h-4 w-4" />
+                      </button>
+
+                      {/* Add variant toggle */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExpandedAddVariant(expandedAddVariant === product.id ? null : product.id)
+                          setNewVariant({ talle: "", color: "", stock: 0 })
+                        }}
+                        title="Agregar talle"
+                        className={`rounded-lg p-1.5 transition ${
+                          expandedAddVariant === product.id
+                            ? "bg-blue-100 text-blue-700"
+                            : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
+                        }`}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+
+                      {/* Image edit toggle */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedImageEdit(expandedImageEdit === product.id ? null : product.id)}
+                        title="Cambiar imagen"
+                        className={`rounded-lg p-1.5 transition ${
+                          expandedImageEdit === product.id
+                            ? "bg-slate-200 text-slate-700"
+                            : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
+                        }`}
+                      >
+                        <ImagePlus className="h-4 w-4" />
+                      </button>
+
+                      {/* Delete product */}
+                      {confirmDelete === product.id ? (
+                        <div className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1">
+                          <span className="text-[11px] font-semibold text-red-600">¿Eliminar?</span>
+                          <button
+                            type="button"
+                            onClick={() => deleteProduct(product.id)}
+                            disabled={deleting}
+                            className="text-[11px] font-black text-red-600 hover:text-red-800 disabled:opacity-50"
+                          >
+                            {deleting ? <RefreshCw className="h-3 w-3 animate-spin" /> : "Sí"}
+                          </button>
+                          <span className="text-slate-300">·</span>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete(null)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-700"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(product.id)}
+                          className="rounded-lg p-1.5 text-slate-300 transition hover:bg-red-50 hover:text-red-500"
+                          title="Eliminar producto"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Image edit panel */}
@@ -1438,6 +1444,15 @@ function CategoriesSection() {
     saveOrder(reordered)
   }
 
+  const moveCategory = (from: number, to: number) => {
+    if (to < 0 || to >= categories.length) return
+    const reordered = [...categories]
+    const [moved] = reordered.splice(from, 1)
+    reordered.splice(to, 0, moved)
+    setCategories(reordered)
+    saveOrder(reordered)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -1492,7 +1507,25 @@ function CategoriesSection() {
                 } ${dragIdx === idx ? "opacity-50" : ""}`}
               >
                 <div className="flex items-center gap-2">
-                  <GripVertical className="h-4 w-4 shrink-0 text-slate-300" />
+                  <GripVertical className="h-4 w-4 shrink-0 text-slate-300 hidden sm:block" />
+                  <div className="flex flex-col sm:hidden">
+                    <button
+                      type="button"
+                      onClick={() => moveCategory(idx, idx - 1)}
+                      disabled={idx === 0}
+                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 leading-none py-0.5"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveCategory(idx, idx + 1)}
+                      disabled={idx === categories.length - 1}
+                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 leading-none py-0.5"
+                    >
+                      ▼
+                    </button>
+                  </div>
                   <span className="text-sm font-semibold text-slate-800">{cat.nombre}</span>
                 </div>
 

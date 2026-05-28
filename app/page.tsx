@@ -168,7 +168,7 @@ export default function CraninyStore() {
         className={`fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 md:hidden ${
           isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
-        onClick={() => setIsMobileMenuOpen(false)}
+        onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }}
       />
 
       {/* Mobile slide-in drawer */}
@@ -178,21 +178,21 @@ export default function CraninyStore() {
         }`}
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
-          <Logo onClick={() => { resetFilters(); setIsMobileMenuOpen(false) }} />
+          <Logo onClick={() => { document.body.style.overflow = ""; resetFilters() }} />
           <button
             type="button"
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }}
             className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100"
           >
             <X className="size-5" />
           </button>
         </div>
         <nav className="flex flex-1 flex-col overflow-y-auto py-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}>
-          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">INICIO</Link>
-          <Link href="/productos" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">PRODUCTOS</Link>
-          <Link href="/#how-to-buy" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">COMO COMPRAR</Link>
-          <Link href="/#about" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">QUIENES SOMOS</Link>
-          <Link href="/#contact" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">CONTACTO</Link>
+          <Link href="/" onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">INICIO</Link>
+          <Link href="/productos" onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">PRODUCTOS</Link>
+          <Link href="/#how-to-buy" onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">COMO COMPRAR</Link>
+          <Link href="/#about" onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">QUIENES SOMOS</Link>
+          <Link href="/#contact" onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">CONTACTO</Link>
         </nav>
       </div>
 
@@ -263,7 +263,7 @@ export default function CraninyStore() {
       </section>
 
       {/* SECCIÓN CÓMO COMPRAR (CON CAMPO PARA VIDEO FUTURO) */}
-      <section id="how-to-buy" className="py-20 border-t border-slate-200 bg-white">
+      <section id="how-to-buy" className="scroll-mt-16 py-20 border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <p className="text-xs font-black tracking-[0.4em] text-slate-500 uppercase mb-2">Guía del Cliente</p>
           <h3 className="text-3xl font-black tracking-tight text-slate-900 mb-6">¿CÓMO COMPRAR EN CRANINY?</h3>
@@ -297,7 +297,7 @@ export default function CraninyStore() {
       </section>
 
       {/* SECCIÓN QUIÉNES SOMOS */}
-      <section id="about" className="border-t border-slate-200 py-20 sm:py-28 bg-slate-50">
+      <section id="about" className="scroll-mt-16 border-t border-slate-200 py-20 sm:py-28 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
@@ -331,7 +331,7 @@ export default function CraninyStore() {
       </section>
 
       {/* SECCIÓN CONTACTO */}
-      <section id="contact" className="border-t border-slate-200 py-16 bg-white">
+      <section id="contact" className="scroll-mt-16 border-t border-slate-200 py-16 bg-white">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <p className="text-xs font-black tracking-[0.3em] text-slate-500 uppercase mb-2">Soporte</p>
           <h3 className="text-2xl font-black text-slate-900 uppercase mb-8">CANALES DE CONTACTO</h3>

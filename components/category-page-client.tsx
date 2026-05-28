@@ -31,13 +31,20 @@ const formatPrice = (n: number) =>
 
 const sizes = ["Xs", "S", "M", "L", "Xl", "Xxl", "Xxxl"]
 
+function toggle(set: Set<string>, value: string): Set<string> {
+  const next = new Set(set)
+  if (next.has(value)) next.delete(value)
+  else next.add(value)
+  return next
+}
+
 export function CategoryPageClient({ category, initialProducts, categories }: CategoryPageClientProps) {
   const { addItem } = useCart()
   const [animatingButtons, setAnimatingButtons] = useState<Set<string>>(new Set())
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
-  const [selectedColor, setSelectedColor] = useState<string | null>(null)
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
+  const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set())
+  const [selectedSizes, setSelectedSizes] = useState<Set<string>>(new Set())
   const [maxPrice, setMaxPrice] = useState<number>(500000)
 
   const colors = useMemo(
@@ -46,19 +53,19 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
   )
 
   const resetFilters = () => {
-    setSelectedColor(null)
-    setSelectedSize(null)
+    setSelectedColors(new Set())
+    setSelectedSizes(new Set())
     setMaxPrice(500000)
   }
 
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((product) => {
-      const matchColor = !selectedColor || product.colors.includes(selectedColor)
-      const matchSize = !selectedSize || product.sizes.includes(selectedSize)
+      const matchColor = selectedColors.size === 0 || product.colors.some((c) => selectedColors.has(c))
+      const matchSize = selectedSizes.size === 0 || product.sizes.some((s) => selectedSizes.has(s))
       const matchPrice = product.price <= maxPrice
       return matchColor && matchSize && matchPrice
     })
-  }, [initialProducts, selectedColor, selectedSize, maxPrice])
+  }, [initialProducts, selectedColors, selectedSizes, maxPrice])
 
   const addToCart = (product: ProductCardItem) => {
     const full = initialProducts.find((p) => p.id === product.id)
@@ -108,9 +115,9 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
               <button
                 key={color}
                 type="button"
-                onClick={() => setSelectedColor(selectedColor === color ? null : color)}
+                onClick={() => setSelectedColors((prev) => toggle(prev, color))}
                 className={`rounded-xl px-2 py-2 text-xs font-semibold transition-colors ${
-                  selectedColor === color
+                  selectedColors.has(color)
                     ? "bg-slate-900 text-white"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
@@ -129,9 +136,9 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
             <button
               key={size}
               type="button"
-              onClick={() => setSelectedSize(selectedSize === size ? null : size)}
+              onClick={() => setSelectedSizes((prev) => toggle(prev, size))}
               className={`rounded-xl px-2 py-2 text-xs font-semibold transition-colors ${
-                selectedSize === size
+                selectedSizes.has(size)
                   ? "bg-slate-900 text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
@@ -249,8 +256,12 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
                 <p className="mt-1 text-sm text-slate-600">Mostrando {filteredProducts.length} productos</p>
               </div>
               <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-slate-500">
-                {selectedColor && <span className="rounded-full bg-slate-100 px-3 py-2">{selectedColor}</span>}
-                {selectedSize && <span className="rounded-full bg-slate-100 px-3 py-2">{selectedSize}</span>}
+                {Array.from(selectedColors).map((c) => (
+                  <span key={c} className="rounded-full bg-slate-100 px-3 py-2">{c}</span>
+                ))}
+                {Array.from(selectedSizes).map((s) => (
+                  <span key={s} className="rounded-full bg-slate-100 px-3 py-2">{s}</span>
+                ))}
               </div>
             </div>
 

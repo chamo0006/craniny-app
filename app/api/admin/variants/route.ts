@@ -71,11 +71,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, mode: "fallback" })
     }
 
-    const res = await query(
-      "INSERT INTO variantes_producto (producto_id, talle, color, stock) VALUES ($1, $2, $3, $4) ON CONFLICT (producto_id, talle, color) DO UPDATE SET stock = EXCLUDED.stock RETURNING id",
-      [productId, talle, color, Math.max(0, stock)]
+    const existing = await query<{ id: number }>(
+      "SELECT id FROM variantes_producto WHERE producto_id = $1 AND talle = $2 AND color = $3 LIMIT 1",
+      [productId, talle, color]
     )
-    return NextResponse.json({ ok: true, mode: "db", id: res.rows[0]?.id })
+    let resultId: number
+    if (existing.rows.length > 0) {
+      await query("UPDATE variantes_producto SET stock = $1 WHERE id = $2", [Math.max(0, stock), existing.rows[0].id])
+      resultId = existing.rows[0].id
+    } else {
+      const ins = await query<{ id: number }>(
+        "INSERT INTO variantes_producto (producto_id, talle, color, stock) VALUES ($1, $2, $3, $4) RETURNING id",
+        [productId, talle, color, Math.max(0, stock)]
+      )
+      resultId = ins.rows[0].id
+    }
+    return NextResponse.json({ ok: true, mode: "db", id: resultId })
   } catch (err: any) {
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }

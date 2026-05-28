@@ -52,6 +52,7 @@ export function Navbar() {
   }, [isMobileMenuOpen])
 
   const closeMobileMenu = () => {
+    document.body.style.overflow = ""
     setIsMobileMenuOpen(false)
     setIsMobileProductsOpen(false)
   }

@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Link from "next/link"
 import { SlidersHorizontal, X } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { ProductCard, type ProductCardItem } from "@/components/product-card"
@@ -31,6 +30,13 @@ const formatPrice = (n: number) =>
 
 const sizes = ["Xs", "S", "M", "L", "Xl", "Xxl", "Xxxl"]
 
+function toggle(set: Set<string>, value: string): Set<string> {
+  const next = new Set(set)
+  if (next.has(value)) next.delete(value)
+  else next.add(value)
+  return next
+}
+
 export function ProductsPageClient({ initialProducts, categories, initialColors }: ProductsPageClientProps) {
   const colors = initialColors
   const { addItem } = useCart()
@@ -38,14 +44,14 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [selectedColor, setSelectedColor] = useState<string | null>(null)
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
+  const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set())
+  const [selectedSizes, setSelectedSizes] = useState<Set<string>>(new Set())
   const [maxPrice, setMaxPrice] = useState<number>(500000)
 
   const resetFilters = () => {
     setSelectedCategory(null)
-    setSelectedColor(null)
-    setSelectedSize(null)
+    setSelectedColors(new Set())
+    setSelectedSizes(new Set())
     setMaxPrice(500000)
   }
 
@@ -53,8 +59,8 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
     const seenImages = new Set<string>()
     return initialProducts.filter((product) => {
       const matchCategory = !selectedCategory || product.category === selectedCategory
-      const matchColor = !selectedColor || product.colors.includes(selectedColor)
-      const matchSize = !selectedSize || product.sizes.includes(selectedSize)
+      const matchColor = selectedColors.size === 0 || product.colors.some((c) => selectedColors.has(c))
+      const matchSize = selectedSizes.size === 0 || product.sizes.some((s) => selectedSizes.has(s))
       const matchPrice = product.price <= maxPrice
       if (!matchCategory || !matchColor || !matchSize || !matchPrice) return false
       const imageKey = `${product.category}|${product.image}`
@@ -62,7 +68,7 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
       seenImages.add(imageKey)
       return true
     })
-  }, [initialProducts, selectedCategory, selectedColor, selectedSize, maxPrice])
+  }, [initialProducts, selectedCategory, selectedColors, selectedSizes, maxPrice])
 
   const addToCart = (product: ProductCardItem) => {
     const full = initialProducts.find((p) => p.id === product.id)
@@ -91,6 +97,7 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
           {categories.map((category) => (
             <button
               key={category}
+              type="button"
               onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
               className={`text-left rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                 selectedCategory === category
@@ -110,9 +117,10 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
           {colors.map((color) => (
             <button
               key={color}
-              onClick={() => setSelectedColor(selectedColor === color ? null : color)}
+              type="button"
+              onClick={() => setSelectedColors((prev) => toggle(prev, color))}
               className={`rounded-xl px-2 py-2 text-xs font-semibold transition-colors ${
-                selectedColor === color
+                selectedColors.has(color)
                   ? "bg-slate-900 text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
@@ -129,9 +137,10 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
           {sizes.map((size) => (
             <button
               key={size}
-              onClick={() => setSelectedSize(selectedSize === size ? null : size)}
+              type="button"
+              onClick={() => setSelectedSizes((prev) => toggle(prev, size))}
               className={`rounded-xl px-2 py-2 text-xs font-semibold transition-colors ${
-                selectedSize === size
+                selectedSizes.has(size)
                   ? "bg-slate-900 text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
@@ -248,8 +257,12 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
               </div>
               <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-slate-500">
                 {selectedCategory && <span className="rounded-full bg-slate-100 px-3 py-2">{selectedCategory}</span>}
-                {selectedColor && <span className="rounded-full bg-slate-100 px-3 py-2">{selectedColor}</span>}
-                {selectedSize && <span className="rounded-full bg-slate-100 px-3 py-2">{selectedSize}</span>}
+                {Array.from(selectedColors).map((c) => (
+                  <span key={c} className="rounded-full bg-slate-100 px-3 py-2">{c}</span>
+                ))}
+                {Array.from(selectedSizes).map((s) => (
+                  <span key={s} className="rounded-full bg-slate-100 px-3 py-2">{s}</span>
+                ))}
               </div>
             </div>
 
