@@ -8,6 +8,12 @@ import path from 'path'
 
 const SAVED_FILE_PATH = path.join(process.cwd(), 'data', 'saved-products.json')
 
+// PostgreSQL INTEGER max. IDs created with Date.now() (~1.77T) exceed this.
+const PG_INT_MAX = 2_147_483_647
+
+/** Returns true if this ID belongs to a saved-file product (not a DB row) */
+const isSavedId = (id: number) => id > PG_INT_MAX
+
 export async function GET() {
   try {
     const products = await getProductsWithVariants()
@@ -130,7 +136,34 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ ok: true, mode: "fallback" })
     }
 
-    for (const { id, precio, nombre, imagen_url } of updates) {
+    // Saved-file products (timestamp IDs) can't be stored in PG INTEGER columns.
+    // Route them through override files instead.
+    const savedFileUpdates = updates.filter((u) => isSavedId(u.id))
+    const dbUpdates = updates.filter((u) => !isSavedId(u.id))
+
+    if (savedFileUpdates.length > 0) {
+      const priceUpdates = savedFileUpdates.filter((u) => typeof u.precio === "number")
+      if (priceUpdates.length > 0) {
+        const priceOverrides = await loadPriceOverrides()
+        for (const { id, precio } of priceUpdates) priceOverrides[id] = Math.max(0, precio!)
+        await savePriceOverrides(priceOverrides)
+      }
+      const metaUpdates = savedFileUpdates.filter((u) => u.nombre !== undefined || u.imagen_url !== undefined || u.imagenes !== undefined)
+      if (metaUpdates.length > 0) {
+        const metaOverrides = await loadMetaOverrides()
+        for (const { id, nombre, imagen_url, imagenes } of metaUpdates) {
+          const key = String(id)
+          const existing = metaOverrides[key] ?? {}
+          if (nombre !== undefined) existing.nombre = nombre
+          if (imagen_url !== undefined) existing.imagen_url = imagen_url
+          if (imagenes !== undefined) existing.imagenes = imagenes
+          metaOverrides[key] = existing
+        }
+        await saveMetaOverrides(metaOverrides)
+      }
+    }
+
+    for (const { id, precio, nombre, imagen_url } of dbUpdates) {
       if (typeof precio === "number") {
         await query("UPDATE productos SET precio = $1 WHERE id = $2", [Math.max(0, precio), id])
       }
@@ -183,18 +216,19 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ ok: true, mode: "fallback" })
     }
 
-    // DB mode: delete from DB first
-    await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
-    const prodRes = await query("DELETE FROM productos WHERE id = $1", [id])
-    const deletedFromDb = (prodRes.rowCount ?? 0) > 0
+    let deletedFromDb = false
 
-    // Always also try to remove from saved-products.json (product may have been created in fallback mode)
+    if (!isSavedId(id)) {
+      // Only query the DB when ID fits in PG INTEGER
+      await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
+      const prodRes = await query("DELETE FROM productos WHERE id = $1", [id])
+      deletedFromDb = (prodRes.rowCount ?? 0) > 0
+    }
+
+    // Always also try to remove from saved-products.json (covers timestamp IDs and fallback-mode products)
     await deleteFromSavedFile(id)
 
-    if (!deletedFromDb) {
-      return NextResponse.json({ ok: true, mode: "saved-file" })
-    }
-    return NextResponse.json({ ok: true, mode: "db" })
+    return NextResponse.json({ ok: true, mode: deletedFromDb ? "db" : "saved-file" })
   } catch (err: any) {
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }

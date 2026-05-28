@@ -1355,6 +1355,12 @@ function CategoriesSection() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null)
+  // Drag-and-drop (desktop)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  // Editable position (mobile)
+  const [editingPos, setEditingPos] = useState<number | null>(null)
+  const [posInput, setPosInput] = useState("")
 
   const showToast = (msg: string, type: "ok" | "err") => {
     setToast({ msg, type })
@@ -1432,6 +1438,35 @@ function CategoriesSection() {
     saveOrder(reordered)
   }
 
+  const confirmPosition = (fromIdx: number) => {
+    const toPos = parseInt(posInput, 10)
+    if (!isNaN(toPos) && toPos >= 1 && toPos <= categories.length) {
+      moveCategory(fromIdx, toPos - 1)
+    }
+    setEditingPos(null)
+  }
+
+  // Desktop drag-and-drop handlers
+  const onDragStart = (e: React.DragEvent, idx: number) => {
+    // Ignore on touch/mobile devices
+    if (!e.clientX && !e.clientY) { e.preventDefault(); return }
+    setDragIdx(idx)
+  }
+  const onDragEnter = (idx: number) => setDragOverIdx(idx)
+  const onDragOver = (e: React.DragEvent) => e.preventDefault()
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (dragIdx === null || dragOverIdx === null || dragIdx === dragOverIdx) {
+      setDragIdx(null); setDragOverIdx(null); return
+    }
+    const reordered = [...categories]
+    const [moved] = reordered.splice(dragIdx, 1)
+    reordered.splice(dragOverIdx, 0, moved)
+    setCategories(reordered)
+    setDragIdx(null); setDragOverIdx(null)
+    saveOrder(reordered)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -1459,45 +1494,80 @@ function CategoriesSection() {
             className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 sm:px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
           >
             {adding ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            <span className="hidden sm:inline">Agregar</span>
+            Agregar
           </button>
         </div>
       </SectionCard>
 
-      {/* Category list — arrows to reorder */}
+      {/* Category list */}
       <SectionCard title={`Categorías (${categories.length})`}>
+        <p className="text-xs text-slate-400 -mt-1">
+          <span className="hidden sm:inline">Arrastrá para reordenar en escritorio.</span>
+          <span className="sm:hidden">Tocá el número para cambiar la posición.</span>
+        </p>
         {categories.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400">No hay categorías cargadas.</p>
         ) : (
           <div className="space-y-2">
             {categories.map((cat, idx) => (
               <div
-                key={cat.id}
-                className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-white px-3 py-2.5"
+                key={`${cat.id}-${cat.nombre}`}
+                draggable
+                onDragStart={(e) => onDragStart(e, idx)}
+                onDragEnter={() => onDragEnter(idx)}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
+                className={`flex items-center gap-2 rounded-2xl border bg-white px-3 py-2.5 transition select-none ${
+                  dragOverIdx === idx && dragIdx !== idx ? "border-slate-400 shadow-md" : "border-slate-100"
+                } ${dragIdx === idx ? "opacity-40" : ""}`}
               >
-                {/* Position number */}
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-300">
-                  {idx + 1}
-                </span>
+                {/* Desktop: grip handle */}
+                <GripVertical className="hidden sm:block h-4 w-4 shrink-0 text-slate-300 cursor-grab active:cursor-grabbing" />
 
-                {/* Up / Down arrows */}
+                {/* Mobile: editable position number */}
+                <div className="sm:hidden shrink-0">
+                  {editingPos === idx ? (
+                    <input
+                      type="number"
+                      value={posInput}
+                      autoFocus
+                      min={1}
+                      max={categories.length}
+                      onChange={(e) => setPosInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); confirmPosition(idx) }
+                        if (e.key === "Escape") setEditingPos(null)
+                      }}
+                      onBlur={() => confirmPosition(idx)}
+                      className="w-10 rounded-lg border border-slate-400 bg-white px-1 py-0.5 text-center text-xs font-bold text-slate-700 outline-none focus:border-slate-700 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setEditingPos(idx); setPosInput(String(idx + 1)) }}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-xs font-bold text-slate-400 transition hover:border-slate-400 hover:text-slate-700"
+                      title="Tocá para cambiar la posición"
+                    >
+                      {idx + 1}
+                    </button>
+                  )}
+                </div>
+
+                {/* Up / Down arrows (both mobile and desktop) */}
                 <div className="flex flex-col gap-0.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => moveCategory(idx, idx - 1)}
                     disabled={idx === 0}
-                    className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
-                  >
-                    ▲
-                  </button>
+                    className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                  >▲</button>
                   <button
                     type="button"
                     onClick={() => moveCategory(idx, idx + 1)}
                     disabled={idx === categories.length - 1}
-                    className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
-                  >
-                    ▼
-                  </button>
+                    className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                  >▼</button>
                 </div>
 
                 {/* Category name */}
@@ -1505,7 +1575,7 @@ function CategoriesSection() {
 
                 {/* Delete */}
                 {confirmDelete === cat.id ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1.5 shrink-0">
                     <span className="text-xs font-semibold text-red-600">¿Eliminar?</span>
                     <button
                       type="button"
@@ -1527,7 +1597,7 @@ function CategoriesSection() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setConfirmDelete(cat.id)}
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(cat.id) }}
                     className="rounded-lg p-1.5 text-slate-300 transition hover:bg-red-50 hover:text-red-500 shrink-0"
                     title="Eliminar categoría"
                   >

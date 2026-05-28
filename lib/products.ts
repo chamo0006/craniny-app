@@ -225,7 +225,17 @@ export async function getCategories(): Promise<Category[]> {
       .filter((name) => !knownNames.has(name.toLowerCase()))
       .map((name) => ({ id: stableId(name), nombre: name }))
 
-    const all = [...activeFallback, ...activeAdded, ...savedCats]
+    // Deduplicate: keep first occurrence by id, then by name (case-insensitive)
+    const rawAll = [...activeFallback, ...activeAdded, ...savedCats]
+    const seenIds = new Set<number>()
+    const seenNames = new Set<string>()
+    const all = rawAll.filter((c) => {
+      if (seenIds.has(c.id)) return false
+      if (seenNames.has(c.nombre.toLowerCase())) return false
+      seenIds.add(c.id)
+      seenNames.add(c.nombre.toLowerCase())
+      return true
+    })
 
     if (overrides.order.length > 0) {
       const orderMap = new Map(overrides.order.map((name, i) => [name, i]))

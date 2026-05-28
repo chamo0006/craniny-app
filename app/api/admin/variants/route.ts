@@ -3,6 +3,9 @@ import { query } from "@/lib/db"
 import { loadStockOverrides, saveStockOverrides, stockOverrideKey } from "@/lib/stock-overrides"
 import { loadVariantAdditions, saveVariantAdditions } from "@/lib/variant-additions"
 
+const PG_INT_MAX = 2_147_483_647
+const isSavedProductId = (id: number) => id > PG_INT_MAX
+
 type VariantUpdate = {
   variantId: number
   productId: number
@@ -30,8 +33,20 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ ok: true, mode: "fallback" })
     }
 
-    // DB mode: update each variant row
-    for (const { variantId, stock } of updates) {
+    // Saved-file products use timestamp productIds that exceed PG INTEGER max.
+    // Route those through stock-overrides instead of DB.
+    const savedUpdates = updates.filter((u) => isSavedProductId(u.productId))
+    const dbUpdates = updates.filter((u) => !isSavedProductId(u.productId))
+
+    if (savedUpdates.length > 0) {
+      const overrides = await loadStockOverrides()
+      for (const u of savedUpdates) {
+        overrides[stockOverrideKey(u.productId, u.talle, u.color)] = Math.max(0, u.stock)
+      }
+      await saveStockOverrides(overrides)
+    }
+
+    for (const { variantId, stock } of dbUpdates) {
       await query(
         "UPDATE variantes_producto SET stock = $1 WHERE id = $2",
         [Math.max(0, stock), variantId]
@@ -69,6 +84,24 @@ export async function POST(req: Request) {
       await saveStockOverrides(overrides)
 
       return NextResponse.json({ ok: true, mode: "fallback" })
+    }
+
+    // Saved-file products have timestamp IDs that don't fit PG INTEGER
+    if (isSavedProductId(productId)) {
+      const additions = await loadVariantAdditions()
+      const existing = additions.findIndex(
+        (a) => a.productId === productId && a.talle === talle && a.color === color
+      )
+      if (existing >= 0) {
+        additions[existing].stock = stock
+      } else {
+        additions.push({ productId, talle, color, stock })
+      }
+      await saveVariantAdditions(additions)
+      const overrides = await loadStockOverrides()
+      overrides[stockOverrideKey(productId, talle, color)] = stock
+      await saveStockOverrides(overrides)
+      return NextResponse.json({ ok: true, mode: "saved-file" })
     }
 
     const existing = await query<{ id: number }>(
