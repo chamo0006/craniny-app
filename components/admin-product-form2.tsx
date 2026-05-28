@@ -109,7 +109,7 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-[24px] border border-slate-100 bg-slate-50/60 p-6 space-y-5">
+    <div className="rounded-[20px] sm:rounded-[24px] border border-slate-100 bg-slate-50/60 p-4 sm:p-6 space-y-4 sm:space-y-5">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
         {title}
       </p>
@@ -664,7 +664,7 @@ function NewProductSection() {
       {/* ── Toast ── */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl transition-all ${
+          className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl transition-all ${
             toast.type === "ok"
               ? "bg-emerald-950 text-emerald-100"
               : "bg-red-950 text-red-100"
@@ -954,7 +954,7 @@ function StockControlSection() {
       </div>
 
       {/* Filter + refresh */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 w-full">
         {(
           [
             { key: "all", label: "Todos los productos" },
@@ -1165,7 +1165,7 @@ function StockControlSection() {
 
                 {/* Image edit panel */}
                 {expandedImageEdit === product.id && (
-                  <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+                  <div className="border-t border-slate-100 bg-slate-50/50 px-3 sm:px-5 py-3">
                     <p className="text-xs font-semibold text-slate-400 mb-2">Imágenes del producto:</p>
                     <div className="flex flex-wrap items-center gap-2">
                       {getProductImageList(product).map((url) => (
@@ -1210,7 +1210,7 @@ function StockControlSection() {
 
                 {/* Add variant panel */}
                 {expandedAddVariant === product.id && (
-                  <div className="border-t border-blue-100 bg-blue-50/40 px-5 py-3">
+                  <div className="border-t border-blue-100 bg-blue-50/40 px-3 sm:px-5 py-3">
                     <p className="text-xs font-semibold text-blue-600 mb-2">Agregar talle / color:</p>
                     <div className="flex flex-wrap items-end gap-2">
                       <div className="flex flex-col gap-1">
@@ -1266,17 +1266,17 @@ function StockControlSection() {
                     return (
                       <div
                         key={v.id}
-                        className={`flex items-center gap-3 px-5 py-2.5 ${
+                        className={`flex items-center gap-2 px-3 sm:px-5 py-2.5 ${
                           v.stock === 0 ? "bg-red-50/30" : ""
                         }`}
                       >
                         {/* Color dot + name */}
-                        <span className="w-28 text-xs font-medium text-slate-700 truncate">
+                        <span className="w-16 sm:w-24 text-xs font-medium text-slate-700 truncate">
                           {v.color}
                         </span>
 
                         {/* Talle pill */}
-                        <span className="rounded-full border border-slate-100 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-500 font-mono">
+                        <span className="rounded-full border border-slate-100 bg-slate-50 px-2 sm:px-2.5 py-0.5 text-xs text-slate-500 font-mono shrink-0">
                           {v.talle}
                         </span>
 
@@ -1293,7 +1293,7 @@ function StockControlSection() {
                               return next
                             })
                           }}
-                          className={`ml-auto w-16 rounded-xl border px-2 py-1.5 text-center tabular-nums text-sm font-bold outline-none transition focus:ring-1 ${
+                          className={`ml-auto w-14 sm:w-16 rounded-xl border px-2 py-1.5 text-center tabular-nums text-sm font-bold outline-none transition focus:ring-1 ${
                             edits.has(v.id)
                               ? "border-amber-300 bg-amber-50 text-amber-700 focus:ring-amber-200"
                               : v.stock === 0
@@ -1304,10 +1304,10 @@ function StockControlSection() {
                           }`}
                         />
 
-                        {/* Auto badge */}
+                        {/* Auto badge — hidden on mobile to avoid overflow */}
                         {badge && (
                           <span
-                            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${badge.cls}`}
+                            className={`hidden sm:inline rounded-full border px-2.5 py-0.5 text-[11px] font-semibold shrink-0 ${badge.cls}`}
                           >
                             {badge.label}
                           </span>
@@ -1355,8 +1355,6 @@ function CategoriesSection() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null)
-  const [dragIdx, setDragIdx] = useState<number | null>(null)
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
 
   const showToast = (msg: string, type: "ok" | "err") => {
     setToast({ msg, type })
@@ -1425,25 +1423,6 @@ function CategoriesSection() {
     } catch {}
   }
 
-  const onDragStart = (idx: number) => setDragIdx(idx)
-  const onDragEnter = (idx: number) => setDragOverIdx(idx)
-  const onDragOver = (e: React.DragEvent) => e.preventDefault()
-
-  const onDrop = () => {
-    if (dragIdx === null || dragOverIdx === null || dragIdx === dragOverIdx) {
-      setDragIdx(null)
-      setDragOverIdx(null)
-      return
-    }
-    const reordered = [...categories]
-    const [moved] = reordered.splice(dragIdx, 1)
-    reordered.splice(dragOverIdx, 0, moved)
-    setCategories(reordered)
-    setDragIdx(null)
-    setDragOverIdx(null)
-    saveOrder(reordered)
-  }
-
   const moveCategory = (from: number, to: number) => {
     if (to < 0 || to >= categories.length) return
     const reordered = [...categories]
@@ -1477,16 +1456,16 @@ function CategoriesSection() {
             type="button"
             onClick={addCategory}
             disabled={adding || !newName.trim()}
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 sm:px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
           >
             {adding ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Agregar
+            <span className="hidden sm:inline">Agregar</span>
           </button>
         </div>
       </SectionCard>
 
-      {/* Category list with drag-to-reorder */}
-      <SectionCard title={`Categorías (${categories.length}) — arrastrá para reordenar`}>
+      {/* Category list — arrows to reorder */}
+      <SectionCard title={`Categorías (${categories.length})`}>
         {categories.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400">No hay categorías cargadas.</p>
         ) : (
@@ -1494,43 +1473,39 @@ function CategoriesSection() {
             {categories.map((cat, idx) => (
               <div
                 key={cat.id}
-                draggable
-                onDragStart={() => onDragStart(idx)}
-                onDragEnter={() => onDragEnter(idx)}
-                onDragOver={onDragOver}
-                onDrop={onDrop}
-                onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
-                className={`flex items-center justify-between rounded-2xl border bg-white px-4 py-3 transition cursor-grab active:cursor-grabbing ${
-                  dragOverIdx === idx && dragIdx !== idx
-                    ? "border-slate-400 shadow-md"
-                    : "border-slate-100"
-                } ${dragIdx === idx ? "opacity-50" : ""}`}
+                className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-white px-3 py-2.5"
               >
-                <div className="flex items-center gap-2">
-                  <GripVertical className="h-4 w-4 shrink-0 text-slate-300 hidden sm:block" />
-                  <div className="flex flex-col sm:hidden">
-                    <button
-                      type="button"
-                      onClick={() => moveCategory(idx, idx - 1)}
-                      disabled={idx === 0}
-                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 leading-none py-0.5"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveCategory(idx, idx + 1)}
-                      disabled={idx === categories.length - 1}
-                      className="text-slate-400 hover:text-slate-700 disabled:opacity-20 leading-none py-0.5"
-                    >
-                      ▼
-                    </button>
-                  </div>
-                  <span className="text-sm font-semibold text-slate-800">{cat.nombre}</span>
+                {/* Position number */}
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-300">
+                  {idx + 1}
+                </span>
+
+                {/* Up / Down arrows */}
+                <div className="flex flex-col gap-0.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => moveCategory(idx, idx - 1)}
+                    disabled={idx === 0}
+                    className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveCategory(idx, idx + 1)}
+                    disabled={idx === categories.length - 1}
+                    className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-20"
+                  >
+                    ▼
+                  </button>
                 </div>
 
+                {/* Category name */}
+                <span className="flex-1 text-sm font-semibold text-slate-800">{cat.nombre}</span>
+
+                {/* Delete */}
                 {confirmDelete === cat.id ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5">
+                  <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 shrink-0">
                     <span className="text-xs font-semibold text-red-600">¿Eliminar?</span>
                     <button
                       type="button"
@@ -1553,7 +1528,7 @@ function CategoriesSection() {
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(cat.id)}
-                    className="rounded-lg p-1.5 text-slate-300 transition hover:bg-red-50 hover:text-red-500"
+                    className="rounded-lg p-1.5 text-slate-300 transition hover:bg-red-50 hover:text-red-500 shrink-0"
                     title="Eliminar categoría"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -1568,7 +1543,7 @@ function CategoriesSection() {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${
+          className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${
             toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"
           }`}
         >
@@ -1870,7 +1845,7 @@ function SettingsSection() {
       )}
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"}`}>
+        <div className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"}`}>
           {toast.type === "ok" ? <Check className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
           {toast.msg}
         </div>
@@ -1998,7 +1973,7 @@ function ColoresSection() {
       </SectionCard>
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"}`}>
+        <div className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"}`}>
           {toast.type === "ok" ? <Check className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
           {toast.msg}
         </div>
@@ -2022,7 +1997,7 @@ function TabBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl px-5 py-2 text-sm font-medium transition ${
+      className={`flex-1 sm:flex-none rounded-xl px-3 sm:px-5 py-2 text-xs sm:text-sm font-medium transition whitespace-nowrap text-center ${
         active
           ? "bg-white shadow-sm text-slate-900"
           : "text-slate-500 hover:text-slate-800"
@@ -2041,22 +2016,27 @@ export default function AdminProductForm() {
   return (
     <div className="space-y-7">
       {/* Tabs */}
-      <div className="flex gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1 w-fit">
+      <div className="grid grid-cols-3 sm:flex gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1 w-full sm:w-fit">
         <TabBtn active={tab === "nuevo"} onClick={() => setTab("nuevo")}>
-          Nuevo producto
+          <span className="sm:hidden">Nuevo</span>
+          <span className="hidden sm:inline">Nuevo producto</span>
         </TabBtn>
         <TabBtn active={tab === "stock"} onClick={() => setTab("stock")}>
-          Control de stock
+          Stock
         </TabBtn>
         <TabBtn active={tab === "categorias"} onClick={() => setTab("categorias")}>
           Categorías
         </TabBtn>
-        <TabBtn active={tab === "colores"} onClick={() => setTab("colores")}>
-          Colores
-        </TabBtn>
-        <TabBtn active={tab === "config"} onClick={() => setTab("config")}>
-          Configuración
-        </TabBtn>
+        {/* Last 2 tabs: span full row on mobile (col-span-3), invisible wrapper on desktop */}
+        <div className="col-span-3 sm:contents flex gap-1">
+          <TabBtn active={tab === "colores"} onClick={() => setTab("colores")}>
+            Colores
+          </TabBtn>
+          <TabBtn active={tab === "config"} onClick={() => setTab("config")}>
+            <span className="sm:hidden">Config</span>
+            <span className="hidden sm:inline">Configuración</span>
+          </TabBtn>
+        </div>
       </div>
 
       {tab === "nuevo" && <NewProductSection />}

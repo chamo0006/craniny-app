@@ -147,6 +147,19 @@ export async function PATCH(req: Request) {
   }
 }
 
+async function deleteFromSavedFile(id: number): Promise<"deleted" | "not_found" | "readonly"> {
+  try {
+    const raw = await fs.readFile(SAVED_FILE_PATH, "utf8").catch(() => "[]")
+    const saved: { id: number }[] = JSON.parse(raw || "[]")
+    const filtered = saved.filter((p) => p.id !== id)
+    if (filtered.length === saved.length) return "not_found"
+    await fs.writeFile(SAVED_FILE_PATH, JSON.stringify(filtered, null, 2), "utf8")
+    return "deleted"
+  } catch {
+    return "readonly"
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
@@ -154,23 +167,33 @@ export async function DELETE(req: Request) {
     if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 })
 
     if (!process.env.DATABASE_URL) {
-      // Fallback: only saved products can be deleted
-      const raw = await fs.readFile(SAVED_FILE_PATH, "utf8").catch(() => "[]")
-      const saved: { id: number }[] = JSON.parse(raw || "[]")
-      const filtered = saved.filter((p) => p.id !== id)
-      if (filtered.length === saved.length) {
+      const result = await deleteFromSavedFile(id)
+      if (result === "not_found") {
         return NextResponse.json(
-          { error: "Producto no encontrado. Los productos de demo no se pueden eliminar en modo sin base de datos." },
+          { error: "Este producto es de demo y no se puede eliminar sin base de datos configurada." },
           { status: 404 }
         )
       }
-      await fs.writeFile(SAVED_FILE_PATH, JSON.stringify(filtered, null, 2), "utf8")
+      if (result === "readonly") {
+        return NextResponse.json(
+          { error: "No se puede eliminar: el servidor no tiene acceso de escritura. Configurá Supabase para habilitar esta función." },
+          { status: 500 }
+        )
+      }
       return NextResponse.json({ ok: true, mode: "fallback" })
     }
 
-    // DB mode: delete variants first, then product (handles no-cascade configs)
-    await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
-    await query("DELETE FROM productos WHERE id = $1", [id])
+    // DB mode: delete from DB first
+    const varRes = await query("DELETE FROM variantes_producto WHERE producto_id = $1", [id])
+    const prodRes = await query("DELETE FROM productos WHERE id = $1", [id])
+    const deletedFromDb = (prodRes.rowCount ?? 0) > 0
+
+    // Always also try to remove from saved-products.json (product may have been created in fallback mode)
+    await deleteFromSavedFile(id)
+
+    if (!deletedFromDb) {
+      return NextResponse.json({ ok: true, mode: "saved-file" })
+    }
     return NextResponse.json({ ok: true, mode: "db" })
   } catch (err: any) {
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })

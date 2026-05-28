@@ -609,25 +609,30 @@ export async function getProductsWithVariants(): Promise<ProductWithVariants[]> 
     return [...fallbackItems, ...savedItems]
   }
 
-  const productsResult = await query<{ id: number; nombre: string; precio: string | number; category: string | null }>(
-    `SELECT p.id, p.nombre, p.precio, c.nombre AS category
-     FROM productos p
-     LEFT JOIN categorias c ON p.categoria_id = c.id
-     ORDER BY p.nombre`
-  )
-
-  if (productsResult.rows.length === 0) return []
+  const [productsResult, saved] = await Promise.all([
+    query<{ id: number; nombre: string; precio: string | number; category: string | null }>(
+      `SELECT p.id, p.nombre, p.precio, c.nombre AS category
+       FROM productos p
+       LEFT JOIN categorias c ON p.categoria_id = c.id
+       ORDER BY p.nombre`
+    ),
+    loadSavedProducts(),
+  ])
 
   const productIds = productsResult.rows.map((p) => p.id)
-  const variantsResult = await query<Variant>(
-    `SELECT id, producto_id, talle, color, stock, imagen_url
-     FROM variantes_producto
-     WHERE producto_id = ANY($1)
-     ORDER BY color, talle`,
-    [productIds]
-  )
+  const variantsResult =
+    productIds.length > 0
+      ? await query<Variant>(
+          `SELECT id, producto_id, talle, color, stock, imagen_url
+           FROM variantes_producto
+           WHERE producto_id = ANY($1)
+           ORDER BY color, talle`,
+          [productIds]
+        )
+      : { rows: [] as Variant[] }
 
   const dbProductIds = new Set(productsResult.rows.map((p) => p.id))
+
   const fallbackItems: ProductWithVariants[] = fallbackProducts
     .filter((p) => !dbProductIds.has(p.id))
     .map((p) => ({
@@ -648,5 +653,24 @@ export async function getProductsWithVariants(): Promise<ProductWithVariants[]> 
     imagenes: [],
   }))
 
-  return [...fallbackItems, ...dbItems]
+  // Also include products from saved-products.json not yet in DB
+  const savedItems: ProductWithVariants[] = saved
+    .filter((p) => !dbProductIds.has(p.id))
+    .map((p) => ({
+      id: p.id,
+      name: p.nombre,
+      price: Number(p.precio),
+      category: p.category || "Sin categoría",
+      variants: (p.variants || []).map((v, idx) => ({
+        id: idx + 1,
+        producto_id: p.id,
+        talle: v.talle || "",
+        color: v.color || "",
+        stock: v.stock || 0,
+        imagen_url: v.imagen_url || null,
+      })),
+      imagenes: [],
+    }))
+
+  return [...fallbackItems, ...dbItems, ...savedItems]
 }
