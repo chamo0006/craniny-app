@@ -69,11 +69,25 @@ export async function PATCH(req: Request) {
     if (!Array.isArray(order)) {
       return NextResponse.json({ error: "order debe ser un array de nombres" }, { status: 400 })
     }
+
+    const cleanOrder = order.map(String)
+
     if (!process.env.DATABASE_URL) {
+      // Fallback: persist in categories-overrides.json
       const overrides = await loadCatOverrides()
-      overrides.order = order.map(String)
+      overrides.order = cleanOrder
       await saveCatOverrides(overrides)
+      return NextResponse.json({ ok: true })
     }
+
+    // DB mode: persist order inside site_settings JSONB (no schema change needed)
+    await query(
+      `INSERT INTO site_settings (id, data)
+       VALUES (1, jsonb_build_object('categoryOrder', $1::jsonb))
+       ON CONFLICT (id) DO UPDATE
+         SET data = site_settings.data || jsonb_build_object('categoryOrder', $1::jsonb)`,
+      [JSON.stringify(cleanOrder)]
+    )
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })

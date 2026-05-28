@@ -1424,6 +1424,7 @@ function CategoriesSection() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null)
+  const [savingOrder, setSavingOrder] = useState<"idle" | "saving" | "saved" | "error">("idle")
   // Drag-and-drop (desktop)
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
@@ -1489,13 +1490,20 @@ function CategoriesSection() {
   }
 
   const saveOrder = async (ordered: Category[]) => {
+    setSavingOrder("saving")
     try {
-      await fetch("/api/admin/categories", {
+      const res = await fetch("/api/admin/categories", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order: ordered.map((c) => c.nombre) }),
       })
-    } catch {}
+      if (!res.ok) throw new Error("Error al guardar")
+      setSavingOrder("saved")
+      setTimeout(() => setSavingOrder("idle"), 2000)
+    } catch {
+      setSavingOrder("error")
+      setTimeout(() => setSavingOrder("idle"), 3000)
+    }
   }
 
   const moveCategory = (from: number, to: number) => {
@@ -1570,10 +1578,28 @@ function CategoriesSection() {
 
       {/* Category list */}
       <SectionCard title={`Categorías (${categories.length})`}>
-        <p className="text-xs text-slate-400 -mt-1">
-          <span className="hidden sm:inline">Arrastrá para reordenar en escritorio.</span>
-          <span className="sm:hidden">Tocá el número para cambiar la posición.</span>
-        </p>
+        <div className="-mt-1 flex items-center gap-2">
+          <p className="text-xs text-slate-400">
+            <span className="hidden sm:inline">Arrastrá para reordenar. </span>
+            <span className="sm:hidden">Tocá el número para cambiar la posición. </span>
+            El orden se guarda automáticamente.
+          </p>
+          {savingOrder === "saving" && (
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <RefreshCw className="h-3 w-3 animate-spin" /> Guardando...
+            </span>
+          )}
+          {savingOrder === "saved" && (
+            <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+              <Check className="h-3 w-3" /> Guardado
+            </span>
+          )}
+          {savingOrder === "error" && (
+            <span className="flex items-center gap-1 text-xs text-red-500 font-medium">
+              <AlertCircle className="h-3 w-3" /> Error al guardar
+            </span>
+          )}
+        </div>
         {categories.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400">No hay categorías cargadas.</p>
         ) : (

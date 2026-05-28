@@ -6,11 +6,9 @@ import Image from "next/image"
 import {
   Check,
   ChevronRight,
-  MapPin,
   Minus,
   Plus,
   RefreshCw,
-  Shield,
   ShoppingBag,
   Truck,
 } from "lucide-react"
@@ -56,7 +54,6 @@ export function ProductPageClient({ product }: { product: ProductDetail }) {
   const [quantity, setQuantity] = useState(1)
   const [addedToCart, setAddedToCart] = useState(false)
   const [activeImage, setActiveImage] = useState(0)
-  const [postalCode, setPostalCode] = useState("")
   const [discountType, setDiscountType] = useState<"transferencia" | "efectivo">("transferencia")
   const [discountPercent, setDiscountPercent] = useState(20)
   const [freeShipping, setFreeShipping] = useState(false)
@@ -403,46 +400,13 @@ export function ProductPageClient({ product }: { product: ProductDetail }) {
                 </button>
               </div>
 
-              {/* Mensajes de confianza */}
-              <div className="space-y-2.5 rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm">
-                <div className="flex items-start gap-3 text-slate-600">
-                  <Shield className="mt-0.5 h-4 w-4 shrink-0 text-slate-800" />
-                  <span>
-                    <span className="font-semibold text-slate-800">Compra protegida</span>
-                    {" — "}Tus datos cuidados durante toda la compra.
-                  </span>
-                </div>
-                <div className="flex items-start gap-3 text-slate-600">
-                  <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-slate-800" />
-                  <span>
-                    <span className="font-semibold text-slate-800">Cambios</span>
-                    {" — "}Si no te fue, podés cambiar el talle.
-                  </span>
-                </div>
-              </div>
-
-              {/* Calculadora de envío */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-                  <MapPin className="h-3.5 w-3.5" />
-                  Medios de envío
+              {/* Política de cambios */}
+              <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <RefreshCw className="h-4 w-4 shrink-0 text-slate-500" />
+                <p className="text-sm text-slate-600">
+                  <span className="font-semibold text-slate-800">Cambios de talle</span>
+                  {" — "}Si no te quedó, podés cambiarlo sin problema.
                 </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    placeholder="Código postal"
-                    maxLength={8}
-                    className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none placeholder:text-slate-400 transition focus:border-slate-400 focus:bg-white"
-                  />
-                  <button
-                    type="button"
-                    className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-500 hover:bg-slate-50"
-                  >
-                    Calcular
-                  </button>
-                </div>
               </div>
 
               <p className="text-center text-[11px] text-slate-400">

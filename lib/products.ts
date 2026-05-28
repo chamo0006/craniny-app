@@ -245,15 +245,35 @@ export async function getCategories(): Promise<Category[]> {
     return all
   }
 
-  const result = await query<Category>("SELECT id, nombre FROM categorias ORDER BY nombre")
+  // Load categories and saved order in parallel
+  const [result, settingsRes] = await Promise.all([
+    query<Category>("SELECT id, nombre FROM categorias ORDER BY nombre"),
+    query<{ data: Record<string, unknown> }>(
+      "SELECT data FROM site_settings WHERE id = 1 LIMIT 1"
+    ),
+  ])
+
   const dbNames = new Set(result.rows.map((c) => c.nombre.toLowerCase()))
-  // Also exclude fallback categories whose ID collides with a DB category.
-  // Supabase uses SERIAL (1, 2, 3...) which overlaps with hardcoded fallback IDs (1-6).
+  // Exclude fallback categories that collide by ID with a DB category (Supabase SERIAL vs hardcoded IDs 1-6)
   const dbIds = new Set(result.rows.map((c) => c.id))
   const fallbackOnly = fallbackCategories.filter(
     (c) => !dbNames.has(c.nombre.toLowerCase()) && !dbIds.has(c.id)
   )
-  return [...result.rows, ...fallbackOnly]
+
+  const all = [...result.rows, ...fallbackOnly]
+
+  // Apply saved category order from site_settings
+  const categoryOrder = (settingsRes.rows[0]?.data?.categoryOrder as string[] | undefined) ?? []
+  if (categoryOrder.length > 0) {
+    const orderMap = new Map(categoryOrder.map((name, i) => [name.toLowerCase(), i]))
+    all.sort(
+      (a, b) =>
+        (orderMap.get(a.nombre.toLowerCase()) ?? 9999) -
+        (orderMap.get(b.nombre.toLowerCase()) ?? 9999)
+    )
+  }
+
+  return all
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {

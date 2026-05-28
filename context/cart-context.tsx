@@ -9,7 +9,7 @@ import React, {
   useState,
 } from "react"
 import Image from "next/image"
-import { ShoppingBag, X } from "lucide-react"
+import { ShoppingBag, X, CheckCircle, AlertCircle } from "lucide-react"
 import {
   Sheet,
   SheetContent,
@@ -179,34 +179,60 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [showForm, setShowForm] = useState(false)
   const [clientName, setClientName] = useState("")
   const [clientPhone, setClientPhone] = useState("")
-  const [submitting, setSubmitting] = useState(false)
+  const [orderState, setOrderState] = useState<"idle" | "submitting" | "success" | "error">("idle")
+  const [whatsappUrl, setWhatsappUrl] = useState("")
+  const [savedOrderId, setSavedOrderId] = useState<number | null>(null)
 
-  const buildWhatsAppMsg = (name: string) => {
+  // Build the WhatsApp URL synchronously — must run BEFORE any async operation
+  // to capture the current cart state and avoid popup blockers
+  const buildWhatsAppUrl = (name: string, phone: string, cartItems: CartItem[], tot: number, discTot: number, discType: string, discPct: number): string => {
     const phoneNumber = "5491121615661"
-    let msg = "🛒 *CRANINY - PEDIDO NUEVO*\n━━━━━━━━━━━━━━━━━━━━━\n\n"
-    if (name) msg += `👤 *Cliente: ${name}*\n\n`
-    items.forEach((item, idx) => {
+    let msg = "🛒 *PEDIDO CRANINY*\n━━━━━━━━━━━━━━━━━━━━━\n\n"
+    if (name) msg += `👤 *${name}*`
+    if (phone) msg += ` | 📞 ${phone}`
+    if (name || phone) msg += "\n\n"
+    cartItems.forEach((item, idx) => {
       msg += `*${idx + 1}. ${item.name}*\n`
-      msg += `   Talle: ${item.selectedSize} | Color: ${item.selectedColor}\n`
-      msg += `   Cantidad: ${item.quantity}\n`
-      msg += `   Subtotal: ${fmt(item.price * item.quantity)}\n\n`
+      msg += `   🎨 Color: ${item.selectedColor}   📐 Talle: ${item.selectedSize}\n`
+      msg += `   🔢 Cantidad: ${item.quantity}   💵 Subtotal: ${fmt(item.price * item.quantity)}\n\n`
     })
-    msg += `━━━━━━━━━━━━━━━━━━━━━\n\n💰 *TOTAL: ${fmt(total)}*\n`
-    msg += `💳 *Con ${discountType}: ${fmt(transferTotal)} (${discountPercent}% off)*\n\n`
+    msg += `━━━━━━━━━━━━━━━━━━━━━\n`
+    msg += `💰 *TOTAL: ${fmt(tot)}*\n`
+    msg += `💳 *Con ${discType}: ${fmt(discTot)} (${discPct}% off)*\n`
     msg += `━━━━━━━━━━━━━━━━━━━━━\n\n`
     msg += `📦 *Datos de pago:*\n`
     msg += `   Alias: *Valenmotzo*\n`
     msg += `   Nombre: *Valentin Tomas Motzo*\n`
-    msg += `   ‼️ *Enviar comprobante*\n\n`
-    msg += "Quedo a la espera para coordinar el envío. ¡Gracias!"
+    msg += `   ‼️ Enviame el comprobante por acá\n\n`
+    msg += "¡Muchas gracias por tu compra! 🙌 Te contacto para coordinar el envío."
     return `https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`
+  }
+
+  const resetCheckout = () => {
+    setShowForm(false)
+    setClientName("")
+    setClientPhone("")
+    setOrderState("idle")
+    setWhatsappUrl("")
+    setSavedOrderId(null)
   }
 
   const handleConfirmOrder = async () => {
     if (items.length === 0) return
-    setSubmitting(true)
+
+    // ⚠️ CRITICAL: Generate URL synchronously BEFORE any await.
+    // After an await, browsers classify the call as async and block window.open().
+    // By storing the URL in state now and using <a href> later, the user's
+    // click on the link is always treated as a direct user action → never blocked.
+    const url = buildWhatsAppUrl(
+      clientName.trim(), clientPhone.trim(),
+      items, total, transferTotal, discountType, discountPercent
+    )
+    setWhatsappUrl(url)
+    setOrderState("submitting")
+
     try {
-      await fetch("/api/checkout", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -223,13 +249,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           total: transferTotal,
         }),
       })
-    } catch {}
-    window.open(buildWhatsAppMsg(clientName.trim()), "_blank")
+      const data = await res.json()
+      if (data.orderId) setSavedOrderId(data.orderId)
+    } catch {
+      // API failed — order not saved, but user can still contact via WhatsApp
+    }
+
+    // Whether API succeeded or failed, show success screen and clear cart.
+    // The WhatsApp button is always shown so the purchase is never lost.
     clearCart()
-    setShowForm(false)
-    setClientName("")
-    setClientPhone("")
-    setSubmitting(false)
+    setOrderState("success")
   }
 
   return (
@@ -264,14 +293,52 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             </SheetTitle>
           </SheetHeader>
 
-          {items.length === 0 ? (
+          {/* ── Success screen after order confirmed ── */}
+          {orderState === "success" && (
+            <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-10 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                <CheckCircle className="h-8 w-8 text-emerald-600" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black text-slate-900">¡Pedido registrado!</h3>
+                <p className="text-sm text-slate-500">
+                  {savedOrderId ? `Nro. de pedido: #${savedOrderId}` : "Tu pedido fue procesado."}
+                </p>
+                <p className="text-sm text-slate-500">
+                  Hacé clic abajo para finalizar la compra y coordinar el envío por WhatsApp.
+                </p>
+              </div>
+
+              {/* Primary CTA — <a href> so browser NEVER blocks it */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => { setIsOpen(false); resetCheckout() }}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3.5 text-sm font-black text-slate-900 transition hover:bg-emerald-400 active:scale-95"
+              >
+                <span className="text-lg">📱</span>
+                Finalizar por WhatsApp
+              </a>
+
+              <button
+                type="button"
+                onClick={() => { setIsOpen(false); resetCheckout() }}
+                className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-600"
+              >
+                Cerrar sin abrir WhatsApp
+              </button>
+            </div>
+          )}
+
+          {items.length === 0 && orderState !== "success" ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8">
               <ShoppingBag className="size-12 text-slate-200" />
               <p className="text-sm tracking-wide text-slate-400">
                 Tu carrito está vacío
               </p>
             </div>
-          ) : (
+          ) : orderState !== "success" && (
             <>
               <div className="flex-1 space-y-3 overflow-y-auto py-4">
                 {items.map((item) => (
@@ -376,7 +443,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   </Button>
                 ) : (
                   <div className="w-full space-y-3">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tus datos (opcional)</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Tus datos <span className="normal-case font-normal text-slate-400">(opcional — para el registro)</span>
+                    </p>
                     <input
                       type="text"
                       placeholder="Tu nombre"
@@ -391,20 +460,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       onChange={(e) => setClientPhone(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:bg-white"
                     />
+                    {orderState === "error" && (
+                      <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
+                        <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+                        <p className="text-xs text-red-600">No pudimos registrar el pedido, pero podés continuar por WhatsApp.</p>
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => setShowForm(false)}
-                        className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                        onClick={() => { setShowForm(false); setOrderState("idle") }}
+                        disabled={orderState === "submitting"}
+                        className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                       >
                         Cancelar
                       </button>
                       <Button
                         onClick={handleConfirmOrder}
-                        disabled={submitting}
+                        disabled={orderState === "submitting"}
                         className="flex-1 bg-emerald-500 font-bold text-slate-900 hover:bg-emerald-400 disabled:opacity-50"
                       >
-                        {submitting ? "Enviando..." : "Confirmar 📱"}
+                        {orderState === "submitting" ? (
+                          <span className="flex items-center gap-1.5">
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            Registrando...
+                          </span>
+                        ) : "Confirmar pedido 📱"}
                       </Button>
                     </div>
                   </div>
@@ -413,6 +497,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             </>
           )}
         </SheetContent>
+
       </Sheet>
     </CartContext.Provider>
   )
