@@ -259,7 +259,7 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
                 No hay productos con esos filtros. Probá otra combinación.
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 [&>*]:h-full">
                 {filteredProducts.map((product) => (
                   <ProductCard
                     key={product.id}

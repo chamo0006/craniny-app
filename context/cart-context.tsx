@@ -321,7 +321,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 ))}
               </div>
 
-              <SheetFooter className="flex-col gap-3 border-t border-slate-200 pt-4">
+              <SheetFooter className="flex-col gap-3 border-t border-slate-200 pt-4" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}>
                 <div className="w-full space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500">Total</span>

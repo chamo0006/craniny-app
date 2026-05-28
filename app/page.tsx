@@ -4,9 +4,8 @@ import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ShoppingBag, Menu, X, Video, MessageCircle, Mail, Music } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
+import { ProductCard, type ProductCardItem } from "@/components/product-card"
 import { useCart } from "@/context/cart-context"
 
 // Interfaz extendida para soportar filtros de talles y colores
@@ -92,15 +91,16 @@ export default function CraninyStore() {
     })
   }, [selectedCategory, selectedColor, selectedSize, maxPrice])
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: ProductCardItem) => {
+    const full = products.find((p) => p.id === product.id)
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
       category: product.category,
       image: product.image,
-      selectedColor: product.colors[0] ?? "",
-      selectedSize: product.sizes[0] ?? "",
+      selectedColor: full?.colors[0] ?? "",
+      selectedSize: full?.sizes[0] ?? "",
       maxStock: product.stock ?? 99,
     })
     const id = `add-${product.id}`
@@ -152,9 +152,9 @@ export default function CraninyStore() {
               >
                 <ShoppingBag className="size-5" />
                 {count > 0 && (
-                  <Badge className="absolute -top-2 -right-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-slate-900">
+                  <span className="absolute -top-2 -right-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-slate-900">
                     {count}
-                  </Badge>
+                  </span>
                 )}
               </button>
             </div>
@@ -187,7 +187,7 @@ export default function CraninyStore() {
             <X className="size-5" />
           </button>
         </div>
-        <nav className="flex flex-col overflow-y-auto py-3">
+        <nav className="flex flex-1 flex-col overflow-y-auto py-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}>
           <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">INICIO</Link>
           <Link href="/productos" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">PRODUCTOS</Link>
           <Link href="/#how-to-buy" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">COMO COMPRAR</Link>
@@ -244,31 +244,13 @@ export default function CraninyStore() {
           {/* GRILLA PREVIEW DE PRODUCTOS */}
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
             {products.slice(0, 6).map((product) => (
-              <Card key={product.id} className={`group overflow-hidden border border-slate-200 hover:border-slate-300 transition transform hover:-translate-y-1 hover:shadow-lg`}>
-                <Link href={`/productos/${categorySlug(product.category)}/${product.id}`} className="relative block aspect-[4/5] overflow-hidden bg-slate-100">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <Badge className="absolute top-3 left-3 bg-slate-950 text-white font-bold">
-                    {product.category}
-                  </Badge>
-                </Link>
-                <CardContent className="p-4">
-                  <h4 className="mb-2 font-bold text-slate-900 text-sm line-clamp-2">{product.name}</h4>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-black text-slate-900">{formatPrice(product.price)}</span>
-                    <button
-                      onClick={() => addToCart(product)}
-                      className={`rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-800 ${animatingButtons.has(`add-${product.id}`) ? 'scale-95 animate-pulse' : ''}`}
-                    >
-                      Agregar
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProductCard
+                key={product.id}
+                product={product}
+                detailHref={`/productos/${categorySlug(product.category)}/${product.id}`}
+                onAddToCart={addToCart}
+                isAdding={animatingButtons.has(`add-${product.id}`)}
+              />
             ))}
           </div>
         </div>
@@ -338,10 +320,10 @@ export default function CraninyStore() {
             </div>
             <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
               <Image
-                src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&h=1000&fit=crop"
-                alt="Model wearing CRANINY streetwear"
+                src="/images/products/foto%20del%20quienes%20somos.jpg"
+                alt="Craniny streetwear"
                 fill
-                className="object-cover filter grayscale hover:grayscale-0 transition-all duration-700"
+                className="object-cover object-top"
               />
             </div>
           </div>

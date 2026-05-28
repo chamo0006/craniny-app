@@ -174,7 +174,7 @@ export function Navbar() {
         </div>
 
         {/* Nav links */}
-        <nav className="flex flex-col overflow-y-auto py-3">
+        <nav className="flex flex-1 flex-col overflow-y-auto py-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}>
           <Link
             href="/"
             onClick={closeMobileMenu}

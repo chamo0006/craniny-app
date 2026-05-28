@@ -27,10 +27,10 @@ export function ProductCard({ product, detailHref, onAddToCart, isAdding }: Prod
   const inStock = (product.stock ?? 0) > 0
 
   return (
-    <div className="group overflow-hidden rounded-xl border border-slate-100 bg-white transition hover:border-slate-300 hover:shadow-md">
+    <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-100 bg-white transition hover:border-slate-300 hover:shadow-md">
       <Link
         href={detailHref}
-        className="relative block aspect-[3/4] overflow-hidden bg-slate-100"
+        className="relative block aspect-[3/4] shrink-0 overflow-hidden bg-slate-100"
         aria-label={`Ver ${product.name}`}
       >
         <Image
@@ -49,17 +49,21 @@ export function ProductCard({ product, detailHref, onAddToCart, isAdding }: Prod
         )}
       </Link>
 
-      <div className="p-3">
-        <p className="text-[9px] font-black uppercase tracking-[0.35em] text-slate-400">
-          {product.category}
-        </p>
-        <Link href={detailHref}>
-          <h3 className="mt-1 line-clamp-2 text-[13px] font-bold leading-snug text-slate-900 transition-colors group-hover:text-slate-700 sm:text-sm">
-            {product.name}
-          </h3>
-        </Link>
-        <p className="mt-1 text-sm font-black text-slate-900">{formatPrice(product.price)}</p>
+      {/* Content: flex-1 + flex-col to push buttons to the bottom */}
+      <div className="flex flex-1 flex-col p-3">
+        <div className="flex-1">
+          <p className="text-[9px] font-black uppercase tracking-[0.35em] text-slate-400">
+            {product.category}
+          </p>
+          <Link href={detailHref}>
+            <h3 className="mt-1 line-clamp-2 text-[13px] font-bold leading-snug text-slate-900 transition-colors group-hover:text-slate-700 sm:text-sm">
+              {product.name}
+            </h3>
+          </Link>
+          <p className="mt-1 text-sm font-black text-slate-900">{formatPrice(product.price)}</p>
+        </div>
 
+        {/* Buttons always at the bottom of the card */}
         <div className="mt-3 grid grid-cols-2 gap-1.5">
           <Button
             asChild
