@@ -200,7 +200,7 @@ export default function CraninyStore() {
       <section className="relative flex min-h-[60vh] sm:min-h-[85vh] items-center justify-center overflow-hidden pt-16 bg-black">
         <div className="absolute inset-0">
           <Image
-            src="/fondo-craniny.png"
+            src="/fondo-craninyyy.png"
             alt="Urban streetwear background"
             fill
             className="object-cover object-center opacity-100"
