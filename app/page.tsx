@@ -197,25 +197,26 @@ export default function CraninyStore() {
       </div>
 
       {/* HERO SECTION */}
-      <section className="relative flex min-h-[85vh] items-center justify-center overflow-hidden pt-16 bg-slate-100">
+      <section className="relative flex min-h-[60vh] sm:min-h-[85vh] items-center justify-center overflow-hidden pt-16 bg-black">
         <div className="absolute inset-0">
           <Image
             src="/fondo-craniny.png"
             alt="Urban streetwear background"
             fill
-            className="object-cover opacity-100"
+            className="object-cover object-center sm:object-contain opacity-100"
             priority
+            sizes="100vw"
           />
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/45 sm:bg-black/40" />
         </div>
         <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <p className="mb-4 text-xs font-black tracking-[0.5em] text-white/70">CRANINY DROP 2026</p>
-          <h2 className="mb-6 text-5xl font-black tracking-tighter text-white sm:text-7xl lg:text-8xl">
+          <p className="mb-3 text-[10px] sm:text-xs font-black tracking-[0.4em] sm:tracking-[0.5em] text-white/70">CRANINY DROP 2026</p>
+          <h2 className="mb-5 sm:mb-6 text-4xl font-black tracking-tighter text-white sm:text-7xl lg:text-8xl">
             OWN THE STREETS
           </h2>
           <Link
             href="/productos"
-            className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-sm font-black tracking-widest text-slate-900 transition hover:bg-slate-100"
+            className="inline-flex items-center justify-center rounded-full bg-white px-6 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-black tracking-widest text-slate-900 transition hover:bg-slate-100"
           >
             VER CATÁLOGO
           </Link>
