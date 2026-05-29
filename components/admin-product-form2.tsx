@@ -25,6 +25,9 @@ import {
   Database,
   ArrowUpCircle,
   LayoutDashboard,
+  PackageX,
+  RotateCcw,
+  BadgeDollarSign,
   ShoppingCart,
   TrendingUp,
   Users,
@@ -59,7 +62,7 @@ type StockProduct = {
   imagenes?: string[]
 }
 type StockFilter = "all" | "out" | "low"
-type AdminTab = "dashboard" | "nuevo" | "stock" | "pedidos" | "categorias" | "colores" | "config"
+type AdminTab = "dashboard" | "nuevo" | "stock" | "pedidos" | "ventas" | "categorias" | "colores" | "config"
 type OrderStatus = "pendiente" | "pagado" | "enviado" | "cancelado"
 type OrderItem = { id: number; nombre_producto: string; talle: string | null; color: string | null; cantidad: number; precio_unitario: number }
 type Order = { id: number; created_at: string; estado: OrderStatus; total: number; nombre_cliente: string | null; telefono_cliente: string | null; notas: string | null; items: OrderItem[] }
@@ -728,6 +731,8 @@ function StockControlSection() {
   const [addingVariant, setAddingVariant] = useState(false)
   const [confirmDeleteVariant, setConfirmDeleteVariant] = useState<string | null>(null)
   const [deletingVariant, setDeletingVariant] = useState(false)
+  const [confirmSoldOut, setConfirmSoldOut] = useState<number | null>(null)
+  const [markingOut, setMarkingOut] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -855,6 +860,32 @@ function StockControlSection() {
       alert(err.message)
     } finally {
       setDeletingVariant(false)
+    }
+  }
+
+  const markSoldOut = async (product: StockProduct) => {
+    if (product.variants.length === 0) return
+    setMarkingOut(true)
+    try {
+      const updates = product.variants.map((v) => ({
+        variantId: v.id,
+        productId: product.id,
+        talle: v.talle,
+        color: v.color,
+        stock: 0,
+      }))
+      const res = await fetch("/api/admin/variants", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+      if (!res.ok) throw new Error("Error al marcar agotado")
+      setConfirmSoldOut(null)
+      load()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setMarkingOut(false)
     }
   }
 
@@ -1121,6 +1152,42 @@ function StockControlSection() {
                     </div>
 
                     <div className="ml-auto flex items-center gap-1.5">
+                      {/* Mark as sold out */}
+                      {confirmSoldOut === product.id ? (
+                        <div className="flex items-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 shrink-0">
+                          <span className="text-[11px] font-semibold text-orange-600">¿Agotar?</span>
+                          <button
+                            type="button"
+                            onClick={() => markSoldOut(product)}
+                            disabled={markingOut}
+                            className="text-[11px] font-black text-orange-600 hover:text-orange-800 disabled:opacity-50"
+                          >
+                            {markingOut ? <RefreshCw className="h-3 w-3 animate-spin inline" /> : "Sí"}
+                          </button>
+                          <span className="text-slate-300">·</span>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmSoldOut(null)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-700"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmSoldOut(product.id)}
+                          title="Marcar todo el producto como agotado"
+                          className={`rounded-lg p-1.5 transition ${
+                            product.variants.every((v) => v.stock === 0)
+                              ? "bg-red-100 text-red-500"
+                              : "text-slate-300 hover:bg-orange-50 hover:text-orange-500"
+                          }`}
+                        >
+                          <PackageX className="h-4 w-4" />
+                        </button>
+                      )}
+
                       {/* Free shipping toggle */}
                       <button
                         type="button"
@@ -2652,6 +2719,200 @@ function PedidosSection() {
   )
 }
 
+// ─── VENTAS SECTION ──────────────────────────────────────────────────────────
+
+type VentaRow = {
+  id: number
+  created_at: string
+  total: number
+  nombre_cliente: string | null
+  telefono_cliente: string | null
+}
+
+function VentasSection() {
+  const [ventas, setVentas] = useState<VentaRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [count, setCount] = useState(0)
+  const [resetAt, setResetAt] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null)
+
+  const showToast = (msg: string, type: "ok" | "err") => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 4000)
+  }
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/ventas")
+      if (res.ok) {
+        const d = await res.json()
+        setVentas(d.ventas || [])
+        setTotal(d.total || 0)
+        setCount(d.count || 0)
+        setResetAt(d.resetAt || null)
+      }
+    } catch {}
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handleReset = async () => {
+    setResetting(true)
+    try {
+      const res = await fetch("/api/admin/ventas", { method: "DELETE" })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d?.error ?? "Error al reiniciar")
+      setConfirmReset(false)
+      showToast("Ventas reiniciadas correctamente.", "ok")
+      load()
+    } catch (err: any) {
+      showToast(err.message, "err")
+    } finally {
+      setResetting(false)
+    }
+  }
+
+  const fmt = (n: number) => `$ ${new Intl.NumberFormat("es-AR").format(Math.round(n))}`
+  const fmtDate = (s: string) =>
+    new Date(s).toLocaleDateString("es-AR", {
+      day: "2-digit", month: "2-digit", year: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    })
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-24"><RefreshCw className="h-6 w-6 animate-spin text-slate-300" /></div>
+  }
+
+  return (
+    <div className="space-y-5">
+
+      {/* Total de ventas — metric card prominente */}
+      <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">Ventas totales</p>
+            <p className="mt-2 text-4xl font-black text-emerald-700">{fmt(total)}</p>
+            <p className="mt-1 text-sm text-emerald-500">
+              {count} {count === 1 ? "pedido pagado" : "pedidos pagados"}
+              {resetAt && (
+                <span className="ml-2 text-xs text-emerald-400">
+                  desde {fmtDate(resetAt)}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
+            <BadgeDollarSign className="h-7 w-7 text-emerald-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Acciones: actualizar + reiniciar */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={load}
+          className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-600 transition hover:border-slate-400"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Actualizar
+        </button>
+
+        {!confirmReset ? (
+          <button
+            type="button"
+            onClick={() => setConfirmReset(true)}
+            className="ml-auto flex items-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-500 transition hover:bg-red-50"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reiniciar ventas
+          </button>
+        ) : (
+          <div className="ml-auto flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5">
+            <span className="text-xs font-semibold text-red-700">¿Reiniciar el contador a cero?</span>
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={resetting}
+              className="rounded-full bg-red-600 px-3 py-1 text-xs font-black text-white transition hover:bg-red-700 disabled:opacity-50"
+            >
+              {resetting ? <RefreshCw className="h-3 w-3 animate-spin inline" /> : "Sí, reiniciar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmReset(false)}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Historial de ventas */}
+      <SectionCard title={`Historial (${count} ventas)`}>
+        {ventas.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
+            <TrendingUp className="mx-auto h-8 w-8 text-slate-200" />
+            <p className="mt-2 text-sm text-slate-400">
+              Aún no hay ventas registradas. Marcá un pedido como "Pagado" para que aparezca aquí.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {ventas.map((v, idx) => (
+              <div
+                key={v.id}
+                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 transition hover:border-slate-200"
+              >
+                {/* Número de orden */}
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-black text-emerald-600">
+                  {count - idx}
+                </span>
+
+                {/* Info cliente */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
+                    {v.nombre_cliente || "Cliente anónimo"}
+                    <span className="ml-2 text-xs font-normal text-slate-400">#{v.id}</span>
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {fmtDate(v.created_at)}
+                    {v.telefono_cliente && <span className="ml-2">· {v.telefono_cliente}</span>}
+                  </p>
+                </div>
+
+                {/* Monto */}
+                <span className="shrink-0 text-sm font-black text-emerald-700">{fmt(v.total)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Nota informativa */}
+      <div className="flex items-start gap-2 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+        <p className="text-xs text-amber-700">
+          Las ventas se registran automáticamente cuando marcás un pedido como <strong>Pagado</strong> desde la sección de Pedidos. El historial anterior al reinicio no se borra, solo deja de contarse.
+        </p>
+      </div>
+
+      {toast && (
+        <div className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 text-sm font-medium shadow-2xl ${toast.type === "ok" ? "bg-emerald-950 text-emerald-100" : "bg-red-950 text-red-100"}`}>
+          {toast.type === "ok" ? <Check className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+          {toast.msg}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Tab button ───────────────────────────────────────────────────────────────
 
 function TabBtn({
@@ -2685,7 +2946,7 @@ export default function AdminProductForm() {
 
   return (
     <div className="space-y-7">
-      {/* Tabs — 4 cols on mobile, flex on desktop */}
+      {/* Tabs — 4 cols on mobile (2 rows of 4), flex on desktop */}
       <div className="grid grid-cols-4 sm:flex gap-1 rounded-2xl border border-slate-100 bg-slate-50 p-1 w-full sm:w-fit">
         <TabBtn active={tab === "dashboard"} onClick={() => setTab("dashboard")}>Panel</TabBtn>
         <TabBtn active={tab === "nuevo"} onClick={() => setTab("nuevo")}>
@@ -2694,21 +2955,21 @@ export default function AdminProductForm() {
         </TabBtn>
         <TabBtn active={tab === "stock"} onClick={() => setTab("stock")}>Stock</TabBtn>
         <TabBtn active={tab === "pedidos"} onClick={() => setTab("pedidos")}>Pedidos</TabBtn>
-        {/* Last 3: span 4 cols on mobile */}
-        <div className="col-span-4 sm:contents flex gap-1">
-          <TabBtn active={tab === "categorias"} onClick={() => setTab("categorias")}>Categ.</TabBtn>
-          <TabBtn active={tab === "colores"} onClick={() => setTab("colores")}>Colores</TabBtn>
-          <TabBtn active={tab === "config"} onClick={() => setTab("config")}>
-            <span className="sm:hidden">Config</span>
-            <span className="hidden sm:inline">Configuración</span>
-          </TabBtn>
-        </div>
+        {/* Row 2 on mobile: Ventas | Categ. | Colores | Config */}
+        <TabBtn active={tab === "ventas"} onClick={() => setTab("ventas")}>Ventas</TabBtn>
+        <TabBtn active={tab === "categorias"} onClick={() => setTab("categorias")}>Categ.</TabBtn>
+        <TabBtn active={tab === "colores"} onClick={() => setTab("colores")}>Colores</TabBtn>
+        <TabBtn active={tab === "config"} onClick={() => setTab("config")}>
+          <span className="sm:hidden">Config</span>
+          <span className="hidden sm:inline">Configuración</span>
+        </TabBtn>
       </div>
 
       {tab === "dashboard" && <DashboardSection />}
       {tab === "nuevo" && <NewProductSection />}
       {tab === "stock" && <StockControlSection />}
       {tab === "pedidos" && <PedidosSection />}
+      {tab === "ventas" && <VentasSection />}
       {tab === "categorias" && <CategoriesSection />}
       {tab === "colores" && <ColoresSection />}
       {tab === "config" && <SettingsSection />}

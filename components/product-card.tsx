@@ -41,11 +41,14 @@ export function ProductCard({ product, detailHref, onAddToCart, isAdding }: Prod
           sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
         />
         {!inStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-            <span className="rounded-full bg-white/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-700">
-              Agotado
+          <>
+            {/* Dim overlay */}
+            <div className="absolute inset-0 bg-black/20" />
+            {/* Pill badge top-left */}
+            <span className="absolute left-2 top-2 z-10 rounded-full bg-slate-900/90 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm">
+              AGOTADO
             </span>
-          </div>
+          </>
         )}
       </Link>
 
