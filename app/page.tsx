@@ -206,16 +206,16 @@ export default function CraninyStore() {
             className="object-cover opacity-100"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-100 via-white to-slate-100" />
+          <div className="absolute inset-0 bg-black/40" />
         </div>
         <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <p className="mb-4 text-xs font-black tracking-[0.5em] text-slate-500">CRANINY DROP 2026</p>
-          <h2 className="mb-6 text-5xl font-black tracking-tighter text-slate-900 sm:text-7xl lg:text-8xl">
+          <p className="mb-4 text-xs font-black tracking-[0.5em] text-white/70">CRANINY DROP 2026</p>
+          <h2 className="mb-6 text-5xl font-black tracking-tighter text-white sm:text-7xl lg:text-8xl">
             OWN THE STREETS
           </h2>
           <Link
             href="/productos"
-            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-8 py-4 text-sm font-black tracking-widest text-white transition hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-sm font-black tracking-widest text-slate-900 transition hover:bg-slate-100"
           >
             VER CATÁLOGO
           </Link>
