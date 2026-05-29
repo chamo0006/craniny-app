@@ -203,7 +203,7 @@ export default function CraninyStore() {
             src="/fondo-craniny.png"
             alt="Urban streetwear background"
             fill
-            className="object-cover object-center sm:object-contain opacity-100"
+            className="object-cover object-center opacity-100"
             priority
             sizes="100vw"
           />
