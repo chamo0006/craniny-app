@@ -37,16 +37,29 @@ export async function GET() {
 
     if (process.env.DATABASE_URL) {
       try {
+        // Read ventas_reset_at so the dashboard revenue matches the Ventas tab
+        const settingsRes = await query<{ data: Record<string, unknown> }>(
+          "SELECT data FROM site_settings WHERE id = 1 LIMIT 1"
+        )
+        const resetAt = (settingsRes.rows[0]?.data?.ventas_reset_at as string | null) ?? null
+
         const ordersStats = await query<{
           total_orders: string
           pending_orders: string
           total_revenue: string
         }>(
-          `SELECT
-             COUNT(*)::text AS total_orders,
-             COUNT(*) FILTER (WHERE estado = 'pendiente')::text AS pending_orders,
-             COALESCE(SUM(total), 0)::text AS total_revenue
-           FROM pedidos`
+          resetAt
+            ? `SELECT
+                 COUNT(*)::text AS total_orders,
+                 COUNT(*) FILTER (WHERE estado = 'pendiente')::text AS pending_orders,
+                 COALESCE(SUM(total) FILTER (WHERE estado = 'pagado' AND created_at > $1), 0)::text AS total_revenue
+               FROM pedidos`
+            : `SELECT
+                 COUNT(*)::text AS total_orders,
+                 COUNT(*) FILTER (WHERE estado = 'pendiente')::text AS pending_orders,
+                 COALESCE(SUM(total) FILTER (WHERE estado = 'pagado'), 0)::text AS total_revenue
+               FROM pedidos`,
+          resetAt ? [resetAt] : []
         )
         const row = ordersStats.rows[0]
         if (row) {
