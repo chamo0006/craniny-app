@@ -200,7 +200,7 @@ export default function CraninyStore() {
       <section className="relative flex min-h-[60vh] sm:min-h-[85vh] items-center justify-center overflow-hidden pt-16 bg-black">
         <div className="absolute inset-0">
           <Image
-            src="/fondo-craninyyy.png"
+            src="/fondo-craniny.png"
             alt="Urban streetwear background"
             fill
             className="object-cover object-center opacity-100"
@@ -222,17 +222,6 @@ export default function CraninyStore() {
           </Link>
         </div>
       </section>
-
-      {/* SEGUNDA IMAGEN DESTACADA */}
-      <div className="relative w-full h-[50vh] sm:h-[70vh] overflow-hidden">
-        <Image
-          src="/fondo-craniny.png"
-          alt="Craniny collection"
-          fill
-          className="object-cover object-center"
-          sizes="100vw"
-        />
-      </div>
 
       {/* SECCIÓN PRODUCTOS - APARTADO DESTACADO */}
       <section className="py-16 border-t border-slate-200 bg-white">
