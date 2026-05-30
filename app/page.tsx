@@ -223,6 +223,17 @@ export default function CraninyStore() {
         </div>
       </section>
 
+      {/* SEGUNDA IMAGEN DESTACADA */}
+      <div className="relative w-full h-[50vh] sm:h-[70vh] overflow-hidden">
+        <Image
+          src="/fondo-craniny.png"
+          alt="Craniny collection"
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+      </div>
+
       {/* SECCIÓN PRODUCTOS - APARTADO DESTACADO */}
       <section className="py-16 border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
