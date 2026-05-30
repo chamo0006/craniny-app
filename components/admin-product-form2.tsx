@@ -706,6 +706,7 @@ function StockControlSection() {
   const [products, setProducts] = useState<StockProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StockFilter>("all")
+  const [search, setSearch] = useState("")
   const [manualLow, setManualLow] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set()
     try {
@@ -977,13 +978,15 @@ function StockControlSection() {
   )
 
   const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim()
+
+    let base = products
     if (filter === "out")
-      return products
+      base = products
         .map((p) => ({ ...p, variants: p.variants.filter((v) => v.stock === 0) }))
         .filter((p) => p.variants.length > 0)
-
-    if (filter === "low")
-      return products
+    else if (filter === "low")
+      base = products
         .map((p) => ({
           ...p,
           variants: p.variants.filter((v) => {
@@ -993,8 +996,11 @@ function StockControlSection() {
         }))
         .filter((p) => p.variants.length > 0)
 
-    return products
-  }, [products, filter, manualLow])
+    if (!q) return base
+    return base.filter((p) =>
+      p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+    )
+  }, [products, filter, manualLow, search])
 
   if (loading) {
     return (
@@ -1020,6 +1026,29 @@ function StockControlSection() {
           <p className="text-2xl font-bold text-orange-600">{stats.low}</p>
           <p className="text-xs text-orange-400 mt-0.5">Últimas unidades</p>
         </div>
+      </div>
+
+      {/* Search bar */}
+      <div className="relative">
+        <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar producto o categoría..."
+          className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Filter + refresh */}
