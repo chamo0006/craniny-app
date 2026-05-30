@@ -1108,7 +1108,7 @@ function StockControlSection() {
       {/* Legend */}
       <p className="text-xs text-slate-400 flex items-center gap-1.5">
         <AlertTriangle className="h-3 w-3 text-orange-400" />
-        Hacé clic en el ícono naranja para forzar manualmente la alerta &quot;Últimas unidades&quot; en el frontend.
+        Hacé clic en el ícono naranja para mostrar la alerta &quot;Últimas unidades&quot; en la tienda, aunque quede stock.
       </p>
 
       {/* Product list */}
@@ -1455,7 +1455,7 @@ function StockControlSection() {
                             title={
                               isManual
                                 ? 'Quitar alerta "Últimas unidades"'
-                                : 'Forzar "Últimas unidades" en frontend'
+                                : 'Mostrar "Últimas unidades" en la tienda'
                             }
                             className={`rounded-full p-1.5 transition ${
                               isManual
@@ -2160,11 +2160,11 @@ function MigrationSection() {
   }
 
   return (
-    <SectionCard title="Migración a base de datos">
+    <SectionCard title="Sincronizar productos al servidor">
       <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
         <Database className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
         <p className="text-xs text-blue-700 font-medium">
-          Migrá todos los productos locales (hardcodeados y guardados en archivos) a Supabase. Después de migrar, podés eliminar y editar todo desde el panel sin errores.
+          Subí todos los productos al servidor para poder editarlos y eliminarlos desde el panel sin ningún error.
         </p>
       </div>
 
@@ -2192,17 +2192,17 @@ function MigrationSection() {
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3 text-center">
               <p className="text-2xl font-bold text-blue-700">{preview.pending.length}</p>
-              <p className="text-xs text-blue-500 mt-0.5">Por migrar</p>
+              <p className="text-xs text-blue-500 mt-0.5">Por subir</p>
             </div>
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 text-center">
               <p className="text-2xl font-bold text-emerald-700">{preview.already.length}</p>
-              <p className="text-xs text-emerald-500 mt-0.5">Ya en DB</p>
+              <p className="text-xs text-emerald-500 mt-0.5">Ya en el servidor</p>
             </div>
           </div>
 
           {preview.pending.length > 0 && (
             <div className="rounded-2xl border border-slate-100 bg-white p-3 space-y-1">
-              <p className="text-xs font-semibold text-slate-500 mb-2">Se van a migrar:</p>
+              <p className="text-xs font-semibold text-slate-500 mb-2">Se van a subir al servidor:</p>
               {preview.pending.map((p) => (
                 <div key={p.id} className="flex items-center gap-2">
                   <ArrowUpCircle className="h-3 w-3 text-blue-400 shrink-0" />
@@ -2220,7 +2220,7 @@ function MigrationSection() {
               className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
             >
               {migrating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ArrowUpCircle className="h-4 w-4" />}
-              {migrating ? "Migrando..." : preview.pending.length === 0 ? "Todo migrado" : `Migrar ${preview.pending.length} producto${preview.pending.length !== 1 ? "s" : ""}`}
+              {migrating ? "Subiendo..." : preview.pending.length === 0 ? "Todo sincronizado" : `Subir ${preview.pending.length} producto${preview.pending.length !== 1 ? "s" : ""}`}
             </button>
             <button type="button" onClick={() => setPreview(null)} className="rounded-full border border-slate-200 px-4 py-2.5 text-sm text-slate-600 hover:border-slate-400 transition">
               Cancelar
@@ -2257,7 +2257,7 @@ function MigrationSection() {
             ))}
           </div>
           <p className="text-xs text-emerald-600 font-semibold">
-            ✓ Migración completada. Ahora podés eliminar y editar todos los productos desde el panel.
+            ✓ ¡Listo! Ahora podés eliminar y editar todos los productos sin problemas.
           </p>
           <button type="button" onClick={() => { setResults(null); loadPreview() }} className="text-xs text-slate-400 underline">
             Ver estado actual
