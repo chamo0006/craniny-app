@@ -40,15 +40,6 @@ export default function CraninyStore() {
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [maxPrice, setMaxPrice] = useState<number>(500000)
 
-  // After React hydration, re-scroll to hash if present (hydration can reset scroll position)
-  useEffect(() => {
-    const hash = window.location.hash.slice(1)
-    if (hash) {
-      const el = document.getElementById(hash)
-      if (el) el.scrollIntoView({ behavior: "smooth" })
-    }
-  }, [])
-
   useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
@@ -145,12 +136,12 @@ export default function CraninyStore() {
             <p className="mb-8 text-slate-600 max-w-2xl mx-auto">
               Explora nuestra colección completa de streetwear. Desde buzos oversized hasta accesorios únicos, encuentra tu estilo.
             </p>
-            <button
-              onClick={() => document.getElementById("collections")?.scrollIntoView({ behavior: "smooth" })}
+            <Link
+              href="/productos"
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-8 py-3 text-sm font-black tracking-widest text-white transition hover:bg-slate-800"
             >
               VER TODOS LOS PRODUCTOS
-            </button>
+            </Link>
           </div>
 
           {/* GRILLA PREVIEW DE PRODUCTOS */}

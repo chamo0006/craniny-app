@@ -23,17 +23,26 @@ export function Navbar() {
   const pathname = usePathname()
 
   const goToSection = (sectionId: string) => {
+    const fromMobile = isMobileMenuOpen
     closeMobileMenu()
-    if (pathname === "/") {
-      if (sectionId === "inicio") {
-        window.scrollTo({ top: 0, behavior: "smooth" })
-        history.pushState(null, "", "/")
+
+    const doScroll = () => {
+      if (pathname === "/") {
+        if (sectionId === "inicio") {
+          window.scrollTo({ top: 0, behavior: "smooth" })
+        } else {
+          document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
+        }
       } else {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
-        history.pushState(null, "", `/#${sectionId}`)
+        window.location.href = sectionId === "inicio" ? "/" : `/#${sectionId}`
       }
+    }
+
+    // On mobile, wait for the drawer close animation (300ms) before scrolling
+    if (fromMobile) {
+      setTimeout(doScroll, 350)
     } else {
-      window.location.href = sectionId === "inicio" ? "/" : `/#${sectionId}`
+      doScroll()
     }
   }
 
