@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingBag, Menu, X, MessageCircle, Mail, Music } from "lucide-react"
-import { Logo } from "@/components/logo"
+import { MessageCircle, Mail, Music } from "lucide-react"
+import { Navbar } from "@/components/navbar"
 import { ProductCard, type ProductCardItem } from "@/components/product-card"
 import { useCart } from "@/context/cart-context"
 
@@ -31,8 +31,7 @@ const formatPrice = (price: number) =>
   `$ ${new Intl.NumberFormat("es-AR").format(Math.round(price))}`
 
 export default function CraninyStore() {
-  const { addItem, openCart, count } = useCart()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { addItem } = useCart()
   const [animatingButtons, setAnimatingButtons] = useState<Set<string>>(new Set())
   const [products, setProducts] = useState<Product[]>([])
 
@@ -40,15 +39,6 @@ export default function CraninyStore() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [maxPrice, setMaxPrice] = useState<number>(500000)
-
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
-    }
-    return () => { document.body.style.overflow = "" }
-  }, [isMobileMenuOpen])
 
   // After React hydration, re-scroll to hash if present (hydration can reset scroll position)
   useEffect(() => {
@@ -85,20 +75,6 @@ export default function CraninyStore() {
       .catch(() => {})
   }, [])
 
-  const resetFilters = () => {
-    setSelectedCategory(null)
-    setSelectedColor(null)
-    setSelectedSize(null)
-    setMaxPrice(70000)
-    setIsMobileMenuOpen(false)
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
-  const scrollToSection = (id: string) => {
-    document.body.style.overflow = ""
-    setIsMobileMenuOpen(false)
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
-  }
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -129,91 +105,7 @@ export default function CraninyStore() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-slate-200 selection:text-slate-900">
-      {/* HEADER / NAVIGATION */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl text-slate-900">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 md:gap-8">
-            {/* Columna izquierda: hamburger (mobile) + logo (desktop) */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-slate-900 transition-opacity hover:opacity-70 md:hidden"
-                aria-label="Toggle menu"
-              >
-                <Menu className="size-6" />
-              </button>
-              <div className="hidden md:block">
-                <Logo onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
-              </div>
-            </div>
-
-            {/* Columna central: logo centrado (mobile) | nav (desktop) */}
-            <div className="flex items-center justify-center">
-              <div className="md:hidden">
-                <Logo onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
-              </div>
-              <nav className="hidden items-center justify-center gap-10 md:flex">
-                <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="text-sm font-semibold tracking-[0.2em] text-slate-700 transition-colors hover:text-slate-900">INICIO</button>
-                <button onClick={() => scrollToSection("producto")} className="text-sm font-semibold tracking-[0.2em] text-slate-700 transition-colors hover:text-slate-900">PRODUCTOS</button>
-                <button onClick={() => scrollToSection("como-comprar")} className="text-sm font-semibold tracking-[0.2em] text-slate-700 transition-colors hover:text-slate-900">COMO COMPRAR</button>
-                <button onClick={() => scrollToSection("quienes-somos")} className="text-sm font-semibold tracking-[0.2em] text-slate-700 transition-colors hover:text-slate-900">QUIENES SOMOS</button>
-                <button onClick={() => scrollToSection("contacto")} className="text-sm font-semibold tracking-[0.2em] text-slate-700 transition-colors hover:text-slate-900">CONTACTO</button>
-              </nav>
-            </div>
-
-            {/* Columna derecha: carrito */}
-            <div className="flex items-center justify-end">
-              <button
-                type="button"
-                onClick={openCart}
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-950 text-white transition hover:bg-slate-800 md:h-12 md:w-12"
-                aria-label="Abrir carrito"
-              >
-                <ShoppingBag className="size-5" />
-                {count > 0 && (
-                  <span className="absolute -top-2 -right-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-slate-900">
-                    {count}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </header>
-
-      {/* Mobile drawer overlay */}
-      <div
-        className={`fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 md:hidden ${
-          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }}
-      />
-
-      {/* Mobile slide-in drawer */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 flex w-[72%] max-w-xs flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
-          <Logo onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
-          <button
-            type="button"
-            onClick={() => { document.body.style.overflow = ""; setIsMobileMenuOpen(false) }}
-            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-        <nav className="flex flex-1 flex-col overflow-y-auto py-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}>
-          <button onClick={() => scrollToSection("inicio")} className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">INICIO</button>
-          <button onClick={() => scrollToSection("producto")} className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">PRODUCTOS</button>
-          <button onClick={() => scrollToSection("como-comprar")} className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">COMO COMPRAR</button>
-          <button onClick={() => scrollToSection("quienes-somos")} className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">QUIENES SOMOS</button>
-          <button onClick={() => scrollToSection("contacto")} className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50">CONTACTO</button>
-        </nav>
-      </div>
+      <Navbar />
 
       {/* HERO SECTION */}
       <section id="inicio" className="relative flex min-h-[60vh] sm:min-h-[85vh] items-center justify-center overflow-hidden pt-16 bg-black">

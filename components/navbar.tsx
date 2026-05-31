@@ -27,8 +27,10 @@ export function Navbar() {
     if (pathname === "/") {
       if (sectionId === "inicio") {
         window.scrollTo({ top: 0, behavior: "smooth" })
+        history.pushState(null, "", "/")
       } else {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
+        history.pushState(null, "", `/#${sectionId}`)
       }
     } else {
       window.location.href = sectionId === "inicio" ? "/" : `/#${sectionId}`
