@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Menu, ChevronDown, ShoppingBag, X } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { useCart } from "@/context/cart-context"
@@ -19,6 +20,16 @@ export function Navbar() {
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES)
   const { openCart, count } = useCart()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
+
+  const goToSection = (sectionId: string) => {
+    closeMobileMenu()
+    if (pathname === "/") {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
+    } else {
+      window.location.href = `/#${sectionId}`
+    }
+  }
 
   useEffect(() => {
     fetch("/api/admin/categories")
@@ -122,9 +133,9 @@ export function Navbar() {
                   )}
                 </div>
 
-                <Link href="/#how-to-buy" className={navLinkClass}>COMO COMPRAR</Link>
-                <Link href="/#about" className={navLinkClass}>QUIENES SOMOS</Link>
-                <Link href="/#contact" className={navLinkClass}>CONTACTO</Link>
+                <button type="button" onClick={() => goToSection("how-to-buy")} className={navLinkClass}>COMO COMPRAR</button>
+                <button type="button" onClick={() => goToSection("about")} className={navLinkClass}>QUIENES SOMOS</button>
+                <button type="button" onClick={() => goToSection("contact")} className={navLinkClass}>CONTACTO</button>
               </nav>
             </div>
 
@@ -217,27 +228,27 @@ export function Navbar() {
             )}
           </div>
 
-          <Link
-            href="/#how-to-buy"
-            onClick={closeMobileMenu}
-            className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
+          <button
+            type="button"
+            onClick={() => goToSection("how-to-buy")}
+            className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
           >
             COMO COMPRAR
-          </Link>
-          <Link
-            href="/#about"
-            onClick={closeMobileMenu}
-            className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
+          </button>
+          <button
+            type="button"
+            onClick={() => goToSection("about")}
+            className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
           >
             QUIENES SOMOS
-          </Link>
-          <Link
-            href="/#contact"
-            onClick={closeMobileMenu}
-            className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
+          </button>
+          <button
+            type="button"
+            onClick={() => goToSection("contact")}
+            className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
           >
             CONTACTO
-          </Link>
+          </button>
         </nav>
       </div>
     </>
