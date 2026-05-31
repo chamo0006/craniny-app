@@ -433,7 +433,7 @@ function NewProductSection() {
       <SectionCard title="Imágenes del producto">
         <div className="flex flex-wrap gap-3 items-center">
           <label
-            className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500 transition hover:border-slate-500 hover:text-slate-700 ${uploading || uploadedUrls.length >= MAX_IMAGES ? "pointer-events-none opacity-50" : ""}`}
+            className={`relative inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500 transition hover:border-slate-500 hover:text-slate-700 ${uploading || uploadedUrls.length >= MAX_IMAGES ? "pointer-events-none opacity-50" : ""}`}
           >
             {uploading ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
@@ -446,7 +446,7 @@ function NewProductSection() {
               type="file"
               accept="image/*"
               multiple
-              className="sr-only"
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
               disabled={uploading || uploadedUrls.length >= MAX_IMAGES}
               onChange={(e) => e.target.files && uploadImages(e.target.files)}
             />
@@ -1331,7 +1331,7 @@ function StockControlSection() {
                       ))}
                       {getProductImageList(product).length < MAX_IMAGES && (
                         <label
-                          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${imageUploading ? "pointer-events-none opacity-50" : ""}`}
+                          className={`relative inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${imageUploading ? "pointer-events-none opacity-50" : ""}`}
                         >
                           {imageUploading ? (
                             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -1343,7 +1343,7 @@ function StockControlSection() {
                             type="file"
                             accept="image/*"
                             multiple
-                            className="sr-only"
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                             disabled={imageUploading}
                             onChange={(e) => {
                               if (e.target.files?.length) addImagesToProduct(product, e.target.files)
