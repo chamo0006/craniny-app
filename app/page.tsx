@@ -55,18 +55,22 @@ export default function CraninyStore() {
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.products)) {
-          setProducts(
-            data.products.map((p: any) => ({
-              id: p.id,
-              name: p.name,
-              price: p.price,
-              category: p.category,
-              colors: p.colors ?? [],
-              sizes: p.sizes ?? [],
-              image: p.image,
-              stock: p.stock ?? 0,
-            }))
-          )
+          const mapped = data.products.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            category: p.category,
+            colors: p.colors ?? [],
+            sizes: p.sizes ?? [],
+            image: p.image,
+            stock: p.stock ?? 0,
+          }))
+          // Shuffle so the preview grid shows different products on each visit
+          for (let i = mapped.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [mapped[i], mapped[j]] = [mapped[j], mapped[i]]
+          }
+          setProducts(mapped)
         }
       })
       .catch(() => {})
