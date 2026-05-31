@@ -133,15 +133,9 @@ export default function CraninyStore() {
             <h3 className="mb-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
               PRODUCTOS
             </h3>
-            <p className="mb-8 text-slate-600 max-w-2xl mx-auto">
+            <p className="text-slate-600 max-w-2xl mx-auto">
               Explora nuestra colección completa de streetwear. Desde buzos oversized hasta accesorios únicos, encuentra tu estilo.
             </p>
-            <a
-              href="/productos"
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-8 py-3 text-sm font-black tracking-widest text-white transition hover:bg-slate-800"
-            >
-              VER TODOS LOS PRODUCTOS
-            </a>
           </div>
 
           {/* GRILLA PREVIEW DE PRODUCTOS */}
