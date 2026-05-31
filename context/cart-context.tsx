@@ -181,6 +181,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [clientPhone, setClientPhone] = useState("")
   const [touchedName, setTouchedName] = useState(false)
   const [touchedPhone, setTouchedPhone] = useState(false)
+
+  const isValidPhone = (p: string) => /^11\d{8}$/.test(p.trim())
   const [orderState, setOrderState] = useState<"idle" | "submitting" | "success" | "error">("idle")
   const [whatsappUrl, setWhatsappUrl] = useState("")
   const [savedOrderId, setSavedOrderId] = useState<number | null>(null)
@@ -479,18 +481,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                         onChange={(e) => setClientPhone(e.target.value)}
                         onBlur={() => setTouchedPhone(true)}
                         className={`w-full rounded-xl border px-3 py-2 text-sm outline-none focus:bg-white transition ${
-                          clientPhone.trim()
+                          isValidPhone(clientPhone)
                             ? "border-emerald-300 bg-white"
                             : touchedPhone
                             ? "border-red-400 bg-red-50 focus:border-red-500"
                             : "border-slate-200 bg-slate-50 focus:border-slate-400"
                         }`}
                       />
-                      {touchedPhone && !clientPhone.trim() && (
-                        <p className="text-xs text-red-500 font-medium">El teléfono es obligatorio.</p>
+                      {touchedPhone && !isValidPhone(clientPhone) && (
+                        <p className="text-xs text-red-500 font-medium">
+                          {!clientPhone.trim()
+                            ? "El teléfono es obligatorio."
+                            : "Debe empezar con 11 y tener 10 dígitos (ej: 1134567890)."}
+                        </p>
                       )}
                     </div>
-                    {(!clientName.trim() || !clientPhone.trim()) && (touchedName || touchedPhone) && (
+                    {(!clientName.trim() || !isValidPhone(clientPhone)) && (touchedName || touchedPhone) && (
                       <p className="text-xs text-red-500 font-semibold">
                         Necesitamos tu nombre y teléfono para poder identificar tu pedido.
                       </p>
@@ -512,7 +518,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       </button>
                       <Button
                         onClick={handleConfirmOrder}
-                        disabled={orderState === "submitting" || !clientName.trim() || !clientPhone.trim()}
+                        disabled={orderState === "submitting" || !clientName.trim() || !isValidPhone(clientPhone)}
                         className="flex-1 bg-emerald-500 font-bold text-slate-900 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {orderState === "submitting" ? (
