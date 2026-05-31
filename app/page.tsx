@@ -240,7 +240,7 @@ export default function CraninyStore() {
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6">
           <p className="text-xs font-black tracking-[0.3em] text-slate-500 uppercase mb-2">Soporte</p>
           <h3 className="text-2xl font-black text-slate-900 uppercase mb-8">CANALES DE CONTACTO</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="https://instagram.com/craniny.ar" target="_blank" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
               <svg className="size-6 text-slate-500 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -260,12 +260,7 @@ export default function CraninyStore() {
               <span className="text-xs font-bold uppercase text-slate-900">TikTok</span>
               <span className="text-[11px] text-slate-500 mt-1">@craniny.ar</span>
             </a>
-            <a href="mailto:contacto@craniny.com" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
-              <Mail className="size-6 text-slate-500 mb-2" />
-              <span className="text-xs font-bold uppercase text-slate-900">Email</span>
-              <span className="text-[11px] text-slate-500 mt-1">contacto@craniny.com</span>
-            </a>
-            <a href="mailto:Craniny@gmail.com.ar" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
+<a href="mailto:Craniny@gmail.com.ar" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
               <Mail className="size-6 text-slate-500 mb-2" />
               <span className="text-xs font-bold uppercase text-slate-900">Gmail</span>
               <span className="text-[11px] text-slate-500 mt-1">Craniny@gmail.com.ar</span>
