@@ -87,6 +87,7 @@ const LOW_STOCK = 3
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const cellKey = (color: string, talle: string): CellKey => `${color}|${talle}`
+const MAX_IMAGES = 10
 
 function stockBadge(stock: number, manualLow: boolean) {
   if (stock === 0)
@@ -224,8 +225,6 @@ function NewProductSection() {
       setCustomSize("")
     }
   }
-
-  const MAX_IMAGES = 10
 
   // Image upload
   const uploadImages = async (files: FileList) => {
