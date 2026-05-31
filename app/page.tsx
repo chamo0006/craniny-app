@@ -51,6 +51,16 @@ export default function CraninyStore() {
   }, [isMobileMenuOpen])
 
   useEffect(() => {
+    const section = sessionStorage.getItem("scrollTo")
+    if (section) {
+      sessionStorage.removeItem("scrollTo")
+      setTimeout(() => {
+        document.getElementById(section)?.scrollIntoView({ behavior: "smooth" })
+      }, 100)
+    }
+  }, [])
+
+  useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
       .then((data) => {
