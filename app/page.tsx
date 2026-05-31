@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { MessageCircle, Mail, Music } from "lucide-react"
@@ -35,6 +35,8 @@ export default function CraninyStore() {
   const [animatingButtons, setAnimatingButtons] = useState<Set<string>>(new Set())
   const [products, setProducts] = useState<Product[]>([])
 
+  const sectionScrolledRef = useRef(false)
+
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
@@ -66,6 +68,21 @@ export default function CraninyStore() {
       .catch(() => {})
   }, [])
 
+  // Scroll a la sección indicada por ?s= después de que los productos carguen
+  // (evita que el layout shift por carga asíncrona aterrice en la sección equivocada)
+  useEffect(() => {
+    if (products.length === 0 || sectionScrolledRef.current) return
+    const params = new URLSearchParams(window.location.search)
+    const section = params.get("s")
+    if (!section) return
+    sectionScrolledRef.current = true
+    const el = document.getElementById(section)
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 64
+      window.scrollTo({ top, behavior: "smooth" })
+      history.replaceState(null, "", "/")
+    }
+  }, [products])
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -140,15 +157,36 @@ export default function CraninyStore() {
 
           {/* GRILLA PREVIEW DE PRODUCTOS */}
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
-            {products.slice(0, 6).map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                detailHref={`/productos/${categorySlug(product.category)}/${product.id}`}
-                onAddToCart={addToCart}
-                isAdding={animatingButtons.has(`add-${product.id}`)}
-              />
-            ))}
+            {products.length === 0
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white">
+                    <div className="aspect-[3/4] animate-pulse bg-slate-100" />
+                    <div className="flex flex-col gap-2 p-3">
+                      <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-100" />
+                      <div className="h-3.5 w-3/4 animate-pulse rounded bg-slate-100" />
+                      <div className="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
+                      <div className="mt-1 h-8 animate-pulse rounded bg-slate-100" />
+                    </div>
+                  </div>
+                ))
+              : products.slice(0, 6).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    detailHref={`/productos/${categorySlug(product.category)}/${product.id}`}
+                    onAddToCart={addToCart}
+                    isAdding={animatingButtons.has(`add-${product.id}`)}
+                  />
+                ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link
+              href="/productos"
+              className="inline-flex items-center justify-center rounded-full border border-slate-900 bg-slate-900 px-8 py-3 text-xs font-black tracking-widest text-white transition hover:bg-slate-800"
+            >
+              VER TODOS LOS PRODUCTOS
+            </Link>
           </div>
         </div>
       </section>

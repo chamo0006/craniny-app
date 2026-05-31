@@ -4,12 +4,12 @@ import Link from "next/link"
 import Image from "next/image"
 
 interface LogoProps {
-  onClick?: () => void
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
 }
 
 export function Logo({ onClick }: LogoProps) {
   return (
-    <Link href="/" onClick={onClick} className="flex items-center gap-3">
+    <Link href="/" onClick={onClick} scroll={false} className="flex items-center gap-3">
       <Image
         src="/craniny-logo.png"
         alt="CRANINY"

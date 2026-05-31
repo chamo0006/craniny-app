@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, ChevronDown, ShoppingBag, X } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { useCart } from "@/context/cart-context"
@@ -21,6 +21,7 @@ export function Navbar() {
   const { openCart, count } = useCart()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
+  const router = useRouter()
 
   const goToSection = (sectionId: string) => {
     const fromMobile = isMobileMenuOpen
@@ -31,18 +32,41 @@ export function Navbar() {
         if (sectionId === "inicio") {
           window.scrollTo({ top: 0, behavior: "smooth" })
         } else {
-          document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
+          const el = document.getElementById(sectionId)
+          if (el) {
+            const top = el.getBoundingClientRect().top + window.scrollY - 64
+            window.scrollTo({ top, behavior: "smooth" })
+          }
         }
       } else {
-        window.location.href = sectionId === "inicio" ? "/" : `/#${sectionId}`
+        window.location.href = sectionId === "inicio" ? "/" : `/?s=${sectionId}`
       }
     }
 
-    // On mobile, wait for the drawer close animation (300ms) before scrolling
     if (fromMobile) {
       setTimeout(doScroll, 350)
     } else {
       doScroll()
+    }
+  }
+
+  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    const fromMobile = isMobileMenuOpen
+    closeMobileMenu()
+
+    const doNavigate = () => {
+      if (pathname === "/") {
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      } else {
+        router.push("/")
+      }
+    }
+
+    if (fromMobile) {
+      setTimeout(doNavigate, 350)
+    } else {
+      doNavigate()
     }
   }
 
@@ -99,14 +123,14 @@ export function Navbar() {
                 <Menu className="size-6" />
               </button>
               <div className="hidden md:block">
-                <Logo onClick={() => goToSection("inicio")} />
+                <Logo onClick={handleLogoClick} />
               </div>
             </div>
 
             {/* Columna central: logo centrado (mobile) | nav (desktop) */}
             <div className="flex items-center justify-center">
               <div className="md:hidden">
-                <Logo onClick={() => goToSection("inicio")} />
+                <Logo onClick={handleLogoClick} />
               </div>
               <nav className="hidden items-center justify-center gap-6 lg:gap-10 md:flex">
                 <button type="button" onClick={() => goToSection("inicio")} className={navLinkClass}>INICIO</button>
@@ -190,7 +214,7 @@ export function Navbar() {
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
-          <Logo onClick={() => goToSection("inicio")} />
+          <Logo onClick={handleLogoClick} />
           <button
             type="button"
             onClick={closeMobileMenu}
