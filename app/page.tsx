@@ -95,11 +95,9 @@ export default function CraninyStore() {
   }
 
   const scrollToSection = (id: string) => {
-    setIsMobileMenuOpen(false)
     document.body.style.overflow = ""
-    setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
-    }, 50)
+    setIsMobileMenuOpen(false)
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
   }
 
   const filteredProducts = useMemo(() => {
