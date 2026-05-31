@@ -99,14 +99,14 @@ export function Navbar() {
                 <Menu className="size-6" />
               </button>
               <div className="hidden md:block">
-                <Logo />
+                <Logo onClick={() => goToSection("inicio")} />
               </div>
             </div>
 
             {/* Columna central: logo centrado (mobile) | nav (desktop) */}
             <div className="flex items-center justify-center">
               <div className="md:hidden">
-                <Logo />
+                <Logo onClick={() => goToSection("inicio")} />
               </div>
               <nav className="hidden items-center justify-center gap-6 lg:gap-10 md:flex">
                 <button type="button" onClick={() => goToSection("inicio")} className={navLinkClass}>INICIO</button>
@@ -190,7 +190,7 @@ export function Navbar() {
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
-          <Logo />
+          <Logo onClick={() => goToSection("inicio")} />
           <button
             type="button"
             onClick={closeMobileMenu}
