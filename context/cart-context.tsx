@@ -190,7 +190,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Build the WhatsApp URL synchronously — must run BEFORE any async operation
   // to capture the current cart state and avoid popup blockers
   const buildWhatsAppUrl = (name: string, phone: string, cartItems: CartItem[], tot: number, discTot: number, discType: string, discPct: number): string => {
-    const phoneNumber = "5491141741878"
+    const phoneNumber = "5491131961548"
     let msg = "🛒 *PEDIDO CRANINY*\n━━━━━━━━━━━━━━━━━━━━━\n\n"
     if (name) msg += `👤 *${name}*`
     if (phone) msg += ` | 📞 ${phone}`

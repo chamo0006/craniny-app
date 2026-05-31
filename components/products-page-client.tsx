@@ -89,7 +89,7 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
     }, 400)
   }
 
-  const filterContent = (
+  const renderFilterContent = () => (
     <div className="space-y-6">
       <div>
         <p className="text-xs font-black tracking-[0.4em] text-slate-500 uppercase mb-3">Categoría</p>
@@ -201,7 +201,7 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
             <X className="size-5 text-slate-500" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">{filterContent}</div>
+        <div className="flex-1 overflow-y-auto p-4">{renderFilterContent()}</div>
         <div className="border-t border-slate-100 p-4">
           <button
             type="button"
@@ -246,7 +246,7 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
                 Limpiar
               </button>
             </div>
-            {filterContent}
+            {renderFilterContent()}
           </aside>
 
           <section>
