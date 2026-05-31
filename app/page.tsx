@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingBag, Menu, X, Video, MessageCircle, Mail, Music } from "lucide-react"
+import { ShoppingBag, Menu, X, MessageCircle, Mail, Music } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { ProductCard, type ProductCardItem } from "@/components/product-card"
 import { useCart } from "@/context/cart-context"
@@ -267,35 +267,29 @@ export default function CraninyStore() {
 
       </section>
 
-      {/* SECCIÓN CÓMO COMPRAR (CON CAMPO PARA VIDEO FUTURO) */}
-      <section id="how-to-buy" className="scroll-mt-16 py-20 border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-          <p className="text-xs font-black tracking-[0.4em] text-slate-500 uppercase mb-2">Guía del Cliente</p>
-          <h3 className="text-3xl font-black tracking-tight text-slate-900 mb-6">¿CÓMO COMPRAR EN CRANINY?</h3>
-          
-          {/* Contenedor de video a futuro */}
-          <div className="relative w-full aspect-video rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 group overflow-hidden shadow-2xl mb-8">
-            <div className="absolute inset-0 bg-slate-900/10 opacity-50 pointer-events-none" />
-            <Video className="size-12 text-slate-700 mb-3 transition-colors duration-300" />
-            <h4 className="text-sm font-bold text-slate-600 tracking-wide uppercase">Espacio para Video Explicativo</h4>
-            <p className="text-xs text-slate-500 max-w-sm mt-1">Acá se insertará el video instructivo a futuro para que tus clientes vean el proceso de compra dinámico.</p>
+      {/* SECCIÓN CÓMO COMPRAR */}
+      <section id="how-to-buy" className="scroll-mt-16 py-24 border-t border-slate-200 bg-white">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <p className="mb-2 text-xs font-black tracking-[0.4em] text-slate-500 uppercase">Guía del Cliente</p>
+            <h3 className="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">¿CÓMO COMPRAR EN CRANINY?</h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left mt-4">
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
-              <span className="font-mono text-slate-500 font-bold block mb-1">01.</span>
-              <h5 className="text-xs font-bold uppercase mb-1 text-slate-900">Elegí tu Drop</h5>
-              <p className="text-xs text-slate-500">Navegá, filtrá por talle y color, y agregá tus prendas favoritas al carrito urbano.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-slate-50 border border-slate-200">
+              <span className="text-5xl font-black text-slate-200 mb-4 leading-none">01</span>
+              <h5 className="text-base font-black uppercase tracking-wide text-slate-900 mb-3">Elegí tu Drop</h5>
+              <p className="text-sm text-slate-500 leading-relaxed">Navegá, filtrá por talle y color, y agregá tus prendas favoritas al carrito.</p>
             </div>
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
-              <span className="font-mono text-slate-500 font-bold block mb-1">02.</span>
-              <h5 className="text-xs font-bold uppercase mb-1 text-slate-900">Revisá el Carrito</h5>
-              <p className="text-xs text-slate-500">Confirmá que las cantidades y productos seleccionados sean correctos antes de avanzar.</p>
+            <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-slate-900 border border-slate-800">
+              <span className="text-5xl font-black text-white/20 mb-4 leading-none">02</span>
+              <h5 className="text-base font-black uppercase tracking-wide text-white mb-3">Revisá el Carrito</h5>
+              <p className="text-sm text-slate-400 leading-relaxed">Confirmá que las cantidades y productos seleccionados sean correctos antes de avanzar.</p>
             </div>
-            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
-              <span className="font-mono text-slate-500 font-bold block mb-1">03.</span>
-              <h5 className="text-xs font-bold uppercase mb-1 text-slate-900">Despachá al WhatsApp</h5>
-              <p className="text-xs text-slate-500">El botón genera la orden automática y se la manda a Valen para coordinar stock y pagos.</p>
+            <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-slate-50 border border-slate-200">
+              <span className="text-5xl font-black text-slate-200 mb-4 leading-none">03</span>
+              <h5 className="text-base font-black uppercase tracking-wide text-slate-900 mb-3">Despachá al WhatsApp</h5>
+              <p className="text-sm text-slate-500 leading-relaxed">El botón genera la orden automática y la manda a Valen para coordinar stock y pago.</p>
             </div>
           </div>
         </div>
