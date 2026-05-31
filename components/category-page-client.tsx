@@ -29,13 +29,18 @@ const categorySlug = (category: string) => category.toLowerCase().replace(/\s+/g
 const formatPrice = (n: number) =>
   `$ ${new Intl.NumberFormat("es-AR").format(Math.round(n))}`
 
-const sizes = ["Xs", "S", "M", "L", "Xl", "Xxl", "Xxxl"]
+const sizes = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"]
 
 function toggle(set: Set<string>, value: string): Set<string> {
   const next = new Set(set)
   if (next.has(value)) next.delete(value)
   else next.add(value)
   return next
+}
+
+function calcMaxPrice(products: { price: number }[]): number {
+  const max = products.reduce((m, p) => Math.max(m, p.price), 0)
+  return Math.ceil(Math.max(max, 100000) / 10000) * 10000
 }
 
 export function CategoryPageClient({ category, initialProducts, categories }: CategoryPageClientProps) {
@@ -45,7 +50,8 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
 
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set())
   const [selectedSizes, setSelectedSizes] = useState<Set<string>>(new Set())
-  const [maxPrice, setMaxPrice] = useState<number>(500000)
+  const computedMaxPrice = useMemo(() => calcMaxPrice(initialProducts), [initialProducts])
+  const [maxPrice, setMaxPrice] = useState<number>(() => calcMaxPrice(initialProducts))
 
   const colors = useMemo(
     () => Array.from(new Set(initialProducts.flatMap((p) => p.colors))).sort(),
@@ -55,13 +61,14 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
   const resetFilters = () => {
     setSelectedColors(new Set())
     setSelectedSizes(new Set())
-    setMaxPrice(500000)
+    setMaxPrice(computedMaxPrice)
   }
 
   const filteredProducts = useMemo(() => {
+    const colorsLower = new Set([...selectedColors].map(c => c.toLowerCase()))
     return initialProducts.filter((product) => {
-      const matchColor = selectedColors.size === 0 || product.colors.some((c) => selectedColors.has(c))
-      const matchSize = selectedSizes.size === 0 || product.sizes.some((s) => selectedSizes.has(s))
+      const matchColor = colorsLower.size === 0 || product.colors.some((c) => colorsLower.has(c.toLowerCase()))
+      const matchSize = selectedSizes.size === 0 || product.sizes.some((s) => selectedSizes.has(s.toUpperCase()))
       const matchPrice = product.price <= maxPrice
       return matchColor && matchSize && matchPrice
     })
@@ -157,7 +164,7 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
         <input
           type="range"
           min="0"
-          max="500000"
+          max={computedMaxPrice}
           step="1000"
           value={maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}

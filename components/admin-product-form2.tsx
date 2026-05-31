@@ -225,13 +225,20 @@ function NewProductSection() {
     }
   }
 
+  const MAX_IMAGES = 10
+
   // Image upload
   const uploadImages = async (files: FileList) => {
     if (!files.length) return
+    const remaining = MAX_IMAGES - uploadedUrls.length
+    if (remaining <= 0) {
+      showToast("Límite de 10 imágenes alcanzado", "err")
+      return
+    }
     setUploading(true)
     try {
       const form = new FormData()
-      Array.from(files).forEach((f) => form.append("files", f))
+      Array.from(files).slice(0, remaining).forEach((f) => form.append("files", f))
       const res = await fetch("/api/admin/upload", { method: "POST", body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error ?? "Error al subir")
@@ -425,48 +432,45 @@ function NewProductSection() {
 
       {/* ── Imágenes ── */}
       <SectionCard title="Imágenes del producto">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="sr-only"
-          onChange={(e) => e.target.files && uploadImages(e.target.files)}
-        />
         <div className="flex flex-wrap gap-3 items-center">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="inline-flex items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500 transition hover:border-slate-500 hover:text-slate-700 disabled:opacity-50"
+          <label
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500 transition hover:border-slate-500 hover:text-slate-700 ${uploading || uploadedUrls.length >= MAX_IMAGES ? "pointer-events-none opacity-50" : ""}`}
           >
             {uploading ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
               <ImagePlus className="h-4 w-4" />
             )}
-            {uploading ? "Subiendo..." : "Subir imágenes"}
-          </button>
-          {uploadedUrls.length > 0 && (
-            <span className="text-xs text-slate-400">
-              {uploadedUrls.length} imagen{uploadedUrls.length !== 1 ? "es" : ""} subida{uploadedUrls.length !== 1 ? "s" : ""}
-            </span>
-          )}
+            {uploading ? "Subiendo..." : uploadedUrls.length >= MAX_IMAGES ? "Límite alcanzado" : "Subir imágenes"}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              disabled={uploading || uploadedUrls.length >= MAX_IMAGES}
+              onChange={(e) => e.target.files && uploadImages(e.target.files)}
+            />
+          </label>
+          <span className="text-xs text-slate-400">
+            {uploadedUrls.length}/{MAX_IMAGES} imágenes
+          </span>
         </div>
         {uploadedUrls.length > 0 ? (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 mt-1">
             {uploadedUrls.map((url, i) => (
               <div
                 key={url}
                 className="relative group h-20 w-20 shrink-0 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50"
               >
                 <Image src={url} alt={`Imagen ${i + 1}`} fill sizes="80px" className="object-cover" />
+                {/* Siempre visible en mobile, hover en desktop */}
                 <button
                   type="button"
                   onClick={() => setUploadedUrls((p) => p.filter((_, j) => j !== i))}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition"
+                  className="absolute top-0 right-0 flex items-center justify-center bg-black/60 rounded-bl-xl p-1.5 sm:inset-0 sm:rounded-none sm:p-0 sm:bg-black/50 sm:opacity-0 sm:group-hover:opacity-100 transition"
                 >
-                  <Trash2 className="h-4 w-4 text-white" />
+                  <Trash2 className="h-3.5 w-3.5 text-white" />
                 </button>
               </div>
             ))}
@@ -794,15 +798,20 @@ function StockControlSection() {
 
   const addImagesToProduct = async (product: StockProduct, files: FileList) => {
     if (!files.length) return
+    const current = getFullImageList(product)
+    if (current.length >= MAX_IMAGES) {
+      alert("Ya alcanzaste el límite de 10 imágenes")
+      return
+    }
     setImageUploading(true)
     try {
+      const remaining = MAX_IMAGES - current.length
       const form = new FormData()
-      Array.from(files).forEach((f) => form.append("files", f))
+      Array.from(files).slice(0, remaining).forEach((f) => form.append("files", f))
       const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: form })
       const uploadData = await uploadRes.json()
       if (!uploadRes.ok) throw new Error(uploadData?.error ?? "Error al subir")
       const newUrls: string[] = uploadData.urls
-      const current = getFullImageList(product)
       await patchProductImages(product.id, [...current, ...newUrls])
     } catch (err: any) {
       alert(err.message)
@@ -1300,7 +1309,10 @@ function StockControlSection() {
                 {/* Image edit panel */}
                 {expandedImageEdit === product.id && (
                   <div className="border-t border-slate-100 bg-slate-50/50 px-3 sm:px-5 py-3">
-                    <p className="text-xs font-semibold text-slate-400 mb-2">Imágenes del producto:</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-slate-400">Imágenes del producto:</p>
+                      <span className="text-xs text-slate-400">{getProductImageList(product).length}/{MAX_IMAGES}</span>
+                    </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {getProductImageList(product).map((url) => (
                         <div
@@ -1308,36 +1320,39 @@ function StockControlSection() {
                           className="group relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50"
                         >
                           <Image src={url} alt="" fill sizes="56px" className="object-cover" />
+                          {/* Siempre visible en mobile, hover en desktop */}
                           <button
                             type="button"
                             onClick={() => removeImageFromProduct(product, url)}
-                            className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition"
+                            className="absolute top-0 right-0 flex items-center justify-center bg-black/60 rounded-bl-lg p-1 sm:inset-0 sm:rounded-none sm:p-0 sm:bg-black/50 sm:opacity-0 sm:group-hover:opacity-100 transition"
                           >
-                            <X className="h-4 w-4 text-white" />
+                            <X className="h-3 w-3 text-white sm:h-4 sm:w-4" />
                           </button>
                         </div>
                       ))}
-                      <label
-                        className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${imageUploading ? "pointer-events-none opacity-50" : ""}`}
-                      >
-                        {imageUploading ? (
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <ImagePlus className="h-3.5 w-3.5" />
-                        )}
-                        {imageUploading ? "Subiendo..." : "Agregar"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="sr-only"
-                          disabled={imageUploading}
-                          onChange={(e) => {
-                            if (e.target.files?.length) addImagesToProduct(product, e.target.files)
-                            e.target.value = ""
-                          }}
-                        />
-                      </label>
+                      {getProductImageList(product).length < MAX_IMAGES && (
+                        <label
+                          className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-500 transition hover:border-slate-400 hover:text-slate-700 ${imageUploading ? "pointer-events-none opacity-50" : ""}`}
+                        >
+                          {imageUploading ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <ImagePlus className="h-3.5 w-3.5" />
+                          )}
+                          {imageUploading ? "Subiendo..." : "Agregar"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="sr-only"
+                            disabled={imageUploading}
+                            onChange={(e) => {
+                              if (e.target.files?.length) addImagesToProduct(product, e.target.files)
+                              e.target.value = ""
+                            }}
+                          />
+                        </label>
+                      )}
                     </div>
                   </div>
                 )}
