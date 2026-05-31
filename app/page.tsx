@@ -136,12 +136,12 @@ export default function CraninyStore() {
             <p className="mb-8 text-slate-600 max-w-2xl mx-auto">
               Explora nuestra colección completa de streetwear. Desde buzos oversized hasta accesorios únicos, encuentra tu estilo.
             </p>
-            <Link
+            <a
               href="/productos"
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-8 py-3 text-sm font-black tracking-widest text-white transition hover:bg-slate-800"
             >
               VER TODOS LOS PRODUCTOS
-            </Link>
+            </a>
           </div>
 
           {/* GRILLA PREVIEW DE PRODUCTOS */}
@@ -157,12 +157,6 @@ export default function CraninyStore() {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* SECCIÓN PRINCIPAL: FILTROS + PRODUCTOS */}
-      <section id="collections" className="py-12 border-t border-slate-200 bg-slate-50">
-
-
       </section>
 
       {/* SECCIÓN CÓMO COMPRAR */}
