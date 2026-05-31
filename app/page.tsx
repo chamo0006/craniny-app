@@ -50,13 +50,12 @@ export default function CraninyStore() {
     return () => { document.body.style.overflow = "" }
   }, [isMobileMenuOpen])
 
+  // After React hydration, re-scroll to hash if present (hydration can reset scroll position)
   useEffect(() => {
-    const section = sessionStorage.getItem("scrollTo")
-    if (section) {
-      sessionStorage.removeItem("scrollTo")
-      setTimeout(() => {
-        document.getElementById(section)?.scrollIntoView({ behavior: "smooth" })
-      }, 100)
+    const hash = window.location.hash.slice(1)
+    if (hash) {
+      const el = document.getElementById(hash)
+      if (el) el.scrollIntoView({ behavior: "smooth" })
     }
   }, [])
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { Menu, ChevronDown, ShoppingBag, X } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { useCart } from "@/context/cart-context"
@@ -21,15 +21,14 @@ export function Navbar() {
   const { openCart, count } = useCart()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
-  const router = useRouter()
 
   const goToSection = (sectionId: string) => {
     closeMobileMenu()
     if (pathname === "/") {
       document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
     } else {
-      sessionStorage.setItem("scrollTo", sectionId)
-      router.push("/")
+      // Full reload garantiza que el browser scrollee al hash sin interferencia del Router Cache
+      window.location.href = `/#${sectionId}`
     }
   }
 
