@@ -250,10 +250,10 @@ export default function CraninyStore() {
               <span className="text-xs font-bold uppercase text-slate-900">Instagram</span>
               <span className="text-[11px] text-slate-500 mt-1">@craniny.ar</span>
             </a>
-            <a href="https://wa.me/5491121615661" target="_blank" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
+            <a href="https://wa.me/5491141741878" target="_blank" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
               <MessageCircle className="size-6 text-slate-500 mb-2" />
               <span className="text-xs font-bold uppercase text-slate-900">WhatsApp</span>
-              <span className="text-[11px] text-slate-500 mt-1">+54 9 11 2161-5661</span>
+              <span className="text-[11px] text-slate-500 mt-1">+54 9 11 4174-1878</span>
             </a>
             <a href="https://tiktok.com/@craniny.ar" target="_blank" className="flex flex-col items-center p-4 border border-slate-200 rounded-xl bg-slate-50 hover:border-slate-300 transition">
               <Music className="size-6 text-slate-500 mb-2" />
@@ -271,7 +271,7 @@ export default function CraninyStore() {
 
       {/* BOTÓN FLOTANTE WHATSAPP */}
       <a
-        href="https://wa.me/5491121615661"
+        href="https://wa.me/5491141741878"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-5 right-4 size-13 sm:bottom-8 sm:right-8 sm:size-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 z-50"
