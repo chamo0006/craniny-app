@@ -45,38 +45,9 @@ const fallbackCategories: Category[] = [
 
 export { fallbackCategories, fallbackProducts, fallbackVariants }
 
-const fallbackVariants: Variant[] = [
-  { id: 2, producto_id: 6, talle: "L", color: "Blanco", stock: 8, imagen_url: "/images/products/Remera-Black.webp" },
-  { id: 3, producto_id: 7, talle: "M", color: "Negro", stock: 14, imagen_url: "/images/products/Remera-Ranglan.webp" },
-  { id: 4, producto_id: 8, talle: "M", color: "Verde", stock: 9, imagen_url: "/images/products/Musculosa.webp" },
-  { id: 5, producto_id: 9, talle: "S", color: "Negro", stock: 7, imagen_url: "/images/products/Crop top.webp" },
-  { id: 6, producto_id: 10, talle: "M", color: "Blanco", stock: 11, imagen_url: "/images/products/Remera-personalizada.webp" },
-  { id: 7, producto_id: 11, talle: "L", color: "Negro", stock: 5, imagen_url: "/images/products/Remera-Rangla2.webp" },
-  { id: 8, producto_id: 3, talle: "Único", color: "Dorado", stock: 20, imagen_url: "/images/products/Gorra.webp" },
-  { id: 9, producto_id: 12, talle: "M", color: "Negro", stock: 4, imagen_url: "/images/products/Campera.webp" },
-  { id: 10, producto_id: 2, talle: "S", color: "Negro", stock: 5, imagen_url: "/images/products/Bermuda.webp" },
-  { id: 11, producto_id: 2, talle: "M", color: "Negro", stock: 8, imagen_url: "/images/products/Bermuda.webp" },
-  { id: 12, producto_id: 2, talle: "L", color: "Negro", stock: 6, imagen_url: "/images/products/Bermuda.webp" },
-  { id: 13, producto_id: 2, talle: "XL", color: "Negro", stock: 3, imagen_url: "/images/products/Bermuda.webp" },
-  { id: 17, producto_id: 4, talle: "S", color: "Negro", stock: 8, imagen_url: "/images/products/buzo-oliva.webp" },
-  { id: 18, producto_id: 4, talle: "M", color: "Negro", stock: 10, imagen_url: "/images/products/buzo-oliva.webp" },
-  { id: 19, producto_id: 4, talle: "L", color: "Negro", stock: 6, imagen_url: "/images/products/buzo-oliva.webp" },
-  { id: 20, producto_id: 4, talle: "XL", color: "Negro", stock: 4, imagen_url: "/images/products/buzo-oliva.webp" },
-  { id: 21, producto_id: 4, talle: "M", color: "Verde Oliva", stock: 5, imagen_url: "/images/products/buzo-oliva.webp" },
-]
+const fallbackVariants: Variant[] = []
 
-const fallbackProducts = [
-  { id: 2, nombre: "Bermuda urbana", precio: 35000, category: "Bermudas" },
-  { id: 3, nombre: "Gorra de cuero", precio: 25000, category: "Gorras" },
-  { id: 4, nombre: "Buzo Oliva Oversized", precio: 45000, category: "Buzos" },
-  { id: 6, nombre: "Boxy Fit Tee 'Street Culture'", precio: 18000, category: "Remeras" },
-  { id: 7, nombre: "Graphic Tee Ranglan", precio: 22000, category: "Remeras" },
-  { id: 8, nombre: "Musculosa Premium", precio: 16000, category: "Remeras" },
-  { id: 9, nombre: "Crop Top Urban", precio: 14000, category: "Remeras" },
-  { id: 10, nombre: "Remera Personalizada", precio: 20000, category: "Remeras" },
-  { id: 11, nombre: "Remera Rangla 2", precio: 19000, category: "Remeras" },
-  { id: 12, nombre: "Technical Windbreaker", precio: 65000, category: "Camperas" },
-]
+const fallbackProducts: Array<{ id: number; nombre: string; precio: number; category: string }> = []
 
 const SAVED_FILE = path.join(process.cwd(), "data", "saved-products.json")
 

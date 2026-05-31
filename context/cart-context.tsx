@@ -179,6 +179,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [showForm, setShowForm] = useState(false)
   const [clientName, setClientName] = useState("")
   const [clientPhone, setClientPhone] = useState("")
+  const [touchedName, setTouchedName] = useState(false)
+  const [touchedPhone, setTouchedPhone] = useState(false)
   const [orderState, setOrderState] = useState<"idle" | "submitting" | "success" | "error">("idle")
   const [whatsappUrl, setWhatsappUrl] = useState("")
   const [savedOrderId, setSavedOrderId] = useState<number | null>(null)
@@ -212,6 +214,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setShowForm(false)
     setClientName("")
     setClientPhone("")
+    setTouchedName(false)
+    setTouchedPhone(false)
     setOrderState("idle")
     setWhatsappUrl("")
     setSavedOrderId(null)
@@ -443,23 +447,54 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   </Button>
                 ) : (
                   <div className="w-full space-y-3">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                      Tus datos <span className="normal-case font-normal text-slate-400">(opcional — para el registro)</span>
+                    <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                      Tus datos <span className="text-red-500">*</span>
                     </p>
-                    <input
-                      type="text"
-                      placeholder="Tu nombre"
-                      value={clientName}
-                      onChange={(e) => setClientName(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:bg-white"
-                    />
-                    <input
-                      type="tel"
-                      placeholder="Tu teléfono (ej: 1134567890)"
-                      value={clientPhone}
-                      onChange={(e) => setClientPhone(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:bg-white"
-                    />
+                    <div className="space-y-1">
+                      <input
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={clientName}
+                        required
+                        onChange={(e) => setClientName(e.target.value)}
+                        onBlur={() => setTouchedName(true)}
+                        className={`w-full rounded-xl border px-3 py-2 text-sm outline-none focus:bg-white transition ${
+                          clientName.trim()
+                            ? "border-emerald-300 bg-white"
+                            : touchedName
+                            ? "border-red-400 bg-red-50 focus:border-red-500"
+                            : "border-slate-200 bg-slate-50 focus:border-slate-400"
+                        }`}
+                      />
+                      {touchedName && !clientName.trim() && (
+                        <p className="text-xs text-red-500 font-medium">El nombre es obligatorio.</p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <input
+                        type="tel"
+                        placeholder="Tu teléfono (ej: 1134567890)"
+                        value={clientPhone}
+                        required
+                        onChange={(e) => setClientPhone(e.target.value)}
+                        onBlur={() => setTouchedPhone(true)}
+                        className={`w-full rounded-xl border px-3 py-2 text-sm outline-none focus:bg-white transition ${
+                          clientPhone.trim()
+                            ? "border-emerald-300 bg-white"
+                            : touchedPhone
+                            ? "border-red-400 bg-red-50 focus:border-red-500"
+                            : "border-slate-200 bg-slate-50 focus:border-slate-400"
+                        }`}
+                      />
+                      {touchedPhone && !clientPhone.trim() && (
+                        <p className="text-xs text-red-500 font-medium">El teléfono es obligatorio.</p>
+                      )}
+                    </div>
+                    {(!clientName.trim() || !clientPhone.trim()) && (touchedName || touchedPhone) && (
+                      <p className="text-xs text-red-500 font-semibold">
+                        Necesitamos tu nombre y teléfono para poder identificar tu pedido.
+                      </p>
+                    )}
                     {orderState === "error" && (
                       <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
                         <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
@@ -469,7 +504,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => { setShowForm(false); setOrderState("idle") }}
+                        onClick={() => { setShowForm(false); setOrderState("idle"); setTouchedName(false); setTouchedPhone(false) }}
                         disabled={orderState === "submitting"}
                         className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                       >
@@ -477,8 +512,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       </button>
                       <Button
                         onClick={handleConfirmOrder}
-                        disabled={orderState === "submitting"}
-                        className="flex-1 bg-emerald-500 font-bold text-slate-900 hover:bg-emerald-400 disabled:opacity-50"
+                        disabled={orderState === "submitting" || !clientName.trim() || !clientPhone.trim()}
+                        className="flex-1 bg-emerald-500 font-bold text-slate-900 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {orderState === "submitting" ? (
                           <span className="flex items-center gap-1.5">
