@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import { getProductsWithVariants } from "@/lib/products"
+import { log } from "@/lib/logger"
 
 export async function GET() {
   try {
@@ -85,7 +86,9 @@ export async function GET() {
           total: Number(r.total),
           nombre_cliente: r.nombre_cliente,
         }))
-      } catch {}
+      } catch (dbErr) {
+        log.error("dashboard", "Error consultando estadísticas de pedidos en DB", dbErr)
+      }
     }
 
     return NextResponse.json({
@@ -99,6 +102,7 @@ export async function GET() {
       recentOrders,
     })
   } catch (err: any) {
+    log.error("dashboard", "Error en GET /api/admin/dashboard", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }

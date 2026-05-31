@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { log } from "@/lib/logger"
 import { loadStockOverrides, saveStockOverrides, stockOverrideKey } from "@/lib/stock-overrides"
 import { loadVariantAdditions, saveVariantAdditions } from "@/lib/variant-additions"
 import fs from "fs/promises"
@@ -59,6 +60,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ ok: true, mode: "db" })
   } catch (err: any) {
+    log.error("variants", "Error en PATCH /api/admin/variants", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }
@@ -125,6 +127,7 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ ok: true, mode: "db", id: resultId })
   } catch (err: any) {
+    log.error("variants", "Error en POST /api/admin/variants", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }
@@ -193,6 +196,7 @@ export async function DELETE(req: Request) {
     }
     return NextResponse.json({ ok: true, mode: "db" })
   } catch (err: any) {
+    log.error("variants", "Error en DELETE /api/admin/variants", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }

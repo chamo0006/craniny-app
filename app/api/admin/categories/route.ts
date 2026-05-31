@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { log } from "@/lib/logger"
 import { getCategories, fallbackCategories } from "@/lib/products"
 import { loadCatOverrides, saveCatOverrides } from "@/lib/categories-overrides"
 import fs from "fs/promises"
@@ -12,6 +13,7 @@ export async function GET() {
     const categories = await getCategories()
     return NextResponse.json({ categories })
   } catch (err: any) {
+    log.error("categories", "Error en GET /api/admin/categories", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }
@@ -59,6 +61,7 @@ export async function POST(req: Request) {
     )
     return NextResponse.json({ category: result.rows[0] })
   } catch (err: any) {
+    log.error("categories", "Error en POST /api/admin/categories", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }
@@ -90,6 +93,7 @@ export async function PATCH(req: Request) {
     )
     return NextResponse.json({ ok: true })
   } catch (err: any) {
+    log.error("categories", "Error en PATCH /api/admin/categories", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }
@@ -157,6 +161,7 @@ export async function DELETE(req: Request) {
     await query("DELETE FROM categorias WHERE id = $1", [id])
     return NextResponse.json({ ok: true })
   } catch (err: any) {
+    log.error("categories", "Error en DELETE /api/admin/categories", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }

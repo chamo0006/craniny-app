@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { query } from '@/lib/db'
+import { log } from '@/lib/logger'
 import { getProductsWithVariants } from '@/lib/products'
 import { loadPriceOverrides, savePriceOverrides } from '@/lib/price-overrides'
 import { loadMetaOverrides, saveMetaOverrides } from '@/lib/product-meta-overrides'
@@ -88,13 +89,14 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ ok: true, id: productId })
     } catch (dbErr) {
-      // fallback to file storage
+      log.warn("products", `DB no disponible al crear producto "${nombre}", usando archivo local`, dbErr)
       const id = Date.now()
       const savedProduct = { id, nombre, descripcion: descripcion || null, precio, category: categoria || null, variants: Array.isArray(variants) ? variants : [] }
       await appendSavedProduct(savedProduct)
       return NextResponse.json({ ok: true, id, fallback: true })
     }
   } catch (err: any) {
+    log.error("products", "Error en POST /api/admin/products", err)
     return NextResponse.json({ ok: false, error: String(err.message || err) }, { status: 500 })
   }
 }
@@ -176,6 +178,7 @@ export async function PATCH(req: Request) {
     }
     return NextResponse.json({ ok: true, mode: "db" })
   } catch (err: any) {
+    log.error("products", "Error en PATCH /api/admin/products", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }
@@ -243,8 +246,10 @@ export async function DELETE(req: Request) {
     if (!deletedFromDb) {
       return NextResponse.json({ error: "Producto no encontrado en la base de datos." }, { status: 404 })
     }
+    log.info("products", `Producto #${id} eliminado`)
     return NextResponse.json({ ok: true, mode: "db" })
   } catch (err: any) {
+    log.error("products", "Error en DELETE /api/admin/products", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }

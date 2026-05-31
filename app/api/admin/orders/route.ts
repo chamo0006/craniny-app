@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { log } from "@/lib/logger"
 
 export type OrderStatus = "pendiente" | "pagado" | "enviado" | "cancelado"
 
@@ -98,6 +99,7 @@ export async function GET() {
 
     return NextResponse.json({ orders })
   } catch (err: any) {
+    log.error("orders", "Error en GET /api/admin/orders", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }
@@ -144,8 +146,10 @@ export async function PATCH(req: Request) {
       params
     )
 
+    log.info("orders", `Pedido #${id} actualizado${estado ? ` — nuevo estado: ${estado}` : ""}`)
     return NextResponse.json({ ok: true })
   } catch (err: any) {
+    log.error("orders", "Error en PATCH /api/admin/orders", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }
@@ -163,8 +167,10 @@ export async function DELETE(req: Request) {
     await query("DELETE FROM pedido_items WHERE pedido_id = $1", [id])
     await query("DELETE FROM pedidos WHERE id = $1", [id])
 
+    log.info("orders", `Pedido #${id} eliminado`)
     return NextResponse.json({ ok: true })
   } catch (err: any) {
+    log.error("orders", "Error en DELETE /api/admin/orders", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }

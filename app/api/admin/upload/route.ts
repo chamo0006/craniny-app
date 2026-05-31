@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { log } from "@/lib/logger"
 import fs from "fs/promises"
 import path from "path"
 
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ urls })
     } catch (err: any) {
+      log.error("upload", "Error guardando archivo localmente", err)
       return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
     }
   }
@@ -66,6 +68,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ urls })
   } catch (err: any) {
+    log.error("upload", "Error subiendo archivo a Supabase Storage", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }

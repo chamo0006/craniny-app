@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { log } from "@/lib/logger"
 
 /** GET — returns all paid orders + totals, filtered by reset date if set */
 export async function GET() {
@@ -50,6 +51,7 @@ export async function GET() {
       })),
     })
   } catch (err: any) {
+    log.error("ventas", "Error en GET /api/admin/ventas", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }
@@ -71,8 +73,10 @@ export async function DELETE() {
       [now]
     )
 
+    log.info("ventas", `Ventas reseteadas — nueva fecha de corte: ${now}`)
     return NextResponse.json({ ok: true, resetAt: now })
   } catch (err: any) {
+    log.error("ventas", "Error en DELETE /api/admin/ventas", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }

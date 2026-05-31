@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { log } from "@/lib/logger"
 
 type CheckoutItem = {
   id: number
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.DATABASE_URL) {
-      // Fallback: just register the order without touching stock
+      log.info("checkout", `Pedido fallback recibido — cliente: ${nombre_cliente ?? "anónimo"}, items: ${items.length}`)
       return NextResponse.json({ ok: true, fallback: true })
     }
 
@@ -61,12 +62,15 @@ export async function POST(req: Request) {
       }
 
       await query("COMMIT")
+      log.info("checkout", `Pedido #${orderId} guardado — cliente: ${nombre_cliente ?? "anónimo"}, total: ${total}`)
       return NextResponse.json({ ok: true, orderId })
     } catch (dbErr) {
       await query("ROLLBACK")
+      log.error("checkout", "Error al guardar pedido en DB", dbErr)
       return NextResponse.json({ ok: false, error: String(dbErr) }, { status: 500 })
     }
   } catch (err: unknown) {
+    log.error("checkout", "Error inesperado en POST /api/checkout", err)
     const message = err instanceof Error ? err.message : String(err)
     return NextResponse.json({ ok: false, error: message }, { status: 500 })
   }

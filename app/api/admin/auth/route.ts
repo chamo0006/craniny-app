@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
+import { log } from "@/lib/logger"
 
 const COOKIE = "craniny_admin"
 const SECRET = process.env.ADMIN_SECRET ?? "craniny-secret-2025"
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     const { username, password } = await req.json()
 
     if (username !== USERNAME || password !== PASSWORD) {
-      // Small delay to slow brute-force
+      log.warn("auth", `Intento de login fallido — usuario: "${username}"`)
       await new Promise((r) => setTimeout(r, 400))
       return NextResponse.json({ error: "Credenciales incorrectas." }, { status: 401 })
     }
@@ -31,8 +32,10 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",
     })
+    log.info("auth", `Login exitoso — usuario: "${username}"`)
     return res
   } catch (err: any) {
+    log.error("auth", "Error en POST /api/admin/auth", err)
     return NextResponse.json({ error: String(err.message ?? err) }, { status: 500 })
   }
 }

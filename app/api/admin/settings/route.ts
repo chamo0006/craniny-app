@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server"
 import { loadSettings, saveSettings } from "@/lib/settings"
+import { log } from "@/lib/logger"
 
 export async function GET() {
   try {
     const settings = await loadSettings()
     return NextResponse.json(settings)
   } catch (err: any) {
+    log.error("settings", "Error en GET /api/admin/settings", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }
@@ -59,6 +61,7 @@ export async function PATCH(req: Request) {
     await saveSettings(settings)
     return NextResponse.json(settings)
   } catch (err: any) {
+    log.error("settings", "Error en PATCH /api/admin/settings", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }

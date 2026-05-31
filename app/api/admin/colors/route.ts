@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server"
 import { loadColors, saveColors } from "@/lib/colors"
+import { log } from "@/lib/logger"
 
 export async function GET() {
   try {
     const colors = await loadColors()
     return NextResponse.json({ colors })
   } catch (err: any) {
+    log.error("colors", "Error en GET /api/admin/colors", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }
@@ -25,6 +27,7 @@ export async function POST(req: Request) {
     await saveColors(colors)
     return NextResponse.json({ ok: true, colors })
   } catch (err: any) {
+    log.error("colors", "Error en POST /api/admin/colors", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }
@@ -45,6 +48,7 @@ export async function DELETE(req: Request) {
     await saveColors(filtered)
     return NextResponse.json({ ok: true, colors: filtered })
   } catch (err: any) {
+    log.error("colors", "Error en DELETE /api/admin/colors", err)
     return NextResponse.json({ error: String(err.message || err) }, { status: 500 })
   }
 }
