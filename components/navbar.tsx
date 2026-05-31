@@ -25,10 +25,13 @@ export function Navbar() {
   const goToSection = (sectionId: string) => {
     closeMobileMenu()
     if (pathname === "/") {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
+      if (sectionId === "inicio") {
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      } else {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
+      }
     } else {
-      // Full reload garantiza que el browser scrollee al hash sin interferencia del Router Cache
-      window.location.href = `/#${sectionId}`
+      window.location.href = sectionId === "inicio" ? "/" : `/#${sectionId}`
     }
   }
 
@@ -95,7 +98,7 @@ export function Navbar() {
                 <Logo />
               </div>
               <nav className="hidden items-center justify-center gap-6 lg:gap-10 md:flex">
-                <Link href="/" className={navLinkClass}>INICIO</Link>
+                <button type="button" onClick={() => goToSection("inicio")} className={navLinkClass}>INICIO</button>
 
                 <div ref={dropdownRef} className="relative">
                   <button
@@ -134,9 +137,9 @@ export function Navbar() {
                   )}
                 </div>
 
-                <button type="button" onClick={() => goToSection("how-to-buy")} className={navLinkClass}>COMO COMPRAR</button>
-                <button type="button" onClick={() => goToSection("about")} className={navLinkClass}>QUIENES SOMOS</button>
-                <button type="button" onClick={() => goToSection("contact")} className={navLinkClass}>CONTACTO</button>
+                <button type="button" onClick={() => goToSection("como-comprar")} className={navLinkClass}>COMO COMPRAR</button>
+                <button type="button" onClick={() => goToSection("quienes-somos")} className={navLinkClass}>QUIENES SOMOS</button>
+                <button type="button" onClick={() => goToSection("contacto")} className={navLinkClass}>CONTACTO</button>
               </nav>
             </div>
 
@@ -188,13 +191,13 @@ export function Navbar() {
 
         {/* Nav links */}
         <nav className="flex flex-1 flex-col overflow-y-auto py-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 16px)" }}>
-          <Link
-            href="/"
-            onClick={closeMobileMenu}
-            className="px-5 py-3 text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
+          <button
+            type="button"
+            onClick={() => goToSection("inicio")}
+            className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
           >
             INICIO
-          </Link>
+          </button>
 
           {/* Productos expandible */}
           <div>
@@ -231,21 +234,21 @@ export function Navbar() {
 
           <button
             type="button"
-            onClick={() => goToSection("how-to-buy")}
+            onClick={() => goToSection("como-comprar")}
             className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
           >
             COMO COMPRAR
           </button>
           <button
             type="button"
-            onClick={() => goToSection("about")}
+            onClick={() => goToSection("quienes-somos")}
             className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
           >
             QUIENES SOMOS
           </button>
           <button
             type="button"
-            onClick={() => goToSection("contact")}
+            onClick={() => goToSection("contacto")}
             className="px-5 py-3 text-left text-sm font-bold tracking-wider text-slate-700 transition hover:bg-slate-50"
           >
             CONTACTO
