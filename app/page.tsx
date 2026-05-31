@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { MessageCircle, Mail, Music } from "lucide-react"
@@ -35,8 +35,6 @@ export default function CraninyStore() {
   const [animatingButtons, setAnimatingButtons] = useState<Set<string>>(new Set())
   const [products, setProducts] = useState<Product[]>([])
 
-  const sectionScrolledRef = useRef(false)
-
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
@@ -67,22 +65,6 @@ export default function CraninyStore() {
       })
       .catch(() => {})
   }, [])
-
-  // Scroll a la sección indicada por ?s= después de que los productos carguen
-  // (evita que el layout shift por carga asíncrona aterrice en la sección equivocada)
-  useEffect(() => {
-    if (products.length === 0 || sectionScrolledRef.current) return
-    const params = new URLSearchParams(window.location.search)
-    const section = params.get("s")
-    if (!section) return
-    sectionScrolledRef.current = true
-    const el = document.getElementById(section)
-    if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 64
-      window.scrollTo({ top, behavior: "smooth" })
-      history.replaceState(null, "", "/")
-    }
-  }, [products])
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {

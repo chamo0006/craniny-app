@@ -39,7 +39,7 @@ export function Navbar() {
           }
         }
       } else {
-        window.location.href = sectionId === "inicio" ? "/" : `/?s=${sectionId}`
+        window.location.href = sectionId === "inicio" ? "/" : `/#${sectionId}`
       }
     }
 
