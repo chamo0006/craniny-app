@@ -268,7 +268,7 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
           </button>
           <button
             type="button"
-            onClick={resetFilters}
+            onClick={() => { resetFilters(); setIsFilterOpen(false) }}
             className="w-full rounded-xl border border-slate-200 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-500 transition hover:bg-slate-50"
           >
             Limpiar filtros
