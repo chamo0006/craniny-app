@@ -59,7 +59,7 @@ function toggle(set: Set<string>, value: string): Set<string> {
 
 function calcMaxPrice(products: { price: number }[]): number {
   const max = products.reduce((m, p) => Math.max(m, p.price), 0)
-  return Math.ceil(Math.max(max, 100000) / 10000) * 10000
+  return Math.ceil(Math.max(max, 250000) / 10000) * 10000
 }
 
 export function CategoryPageClient({ category, initialProducts, categories }: CategoryPageClientProps) {
@@ -256,13 +256,20 @@ export function CategoryPageClient({ category, initialProducts, categories }: Ca
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">{renderFilterContent()}</div>
-        <div className="border-t border-slate-100 p-4">
+        <div className="border-t border-slate-100 p-4 flex flex-col gap-2">
           <button
             type="button"
             onClick={() => setIsFilterOpen(false)}
             className="w-full rounded-xl bg-slate-900 py-3 text-xs font-black uppercase tracking-widest text-white"
           >
             Ver {filteredProducts.length} producto{filteredProducts.length !== 1 ? "s" : ""}
+          </button>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="w-full rounded-xl border border-slate-200 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-500 transition hover:bg-slate-50"
+          >
+            Limpiar filtros
           </button>
         </div>
       </div>
