@@ -133,7 +133,15 @@ export function ProductsPageClient({ initialProducts, categories, initialColors 
             <button
               key={category}
               type="button"
-              onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+              onClick={() => {
+                const next = selectedCategory === category ? null : category
+                setSelectedCategory(next)
+                if (next !== null) {
+                  setSelectedColors(new Set())
+                  setSelectedSizes(new Set())
+                  setMaxPrice(computedMaxPrice)
+                }
+              }}
               className={`text-left rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                 selectedCategory === category
                   ? "bg-slate-900 text-white"
