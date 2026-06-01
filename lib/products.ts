@@ -531,6 +531,10 @@ export async function getProductById(id: number): Promise<ProductDetail | null> 
     variants.find((v) => v.imagen_url)?.imagen_url ||
     "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=800&fit=crop"
 
+  // Lee imágenes guardadas via admin (PATCH con imagenes[]) o al crear el producto
+  const dbMetaOverrides = await loadMetaOverrides()
+  const dbMeta = dbMetaOverrides[String(productRow.id)]
+
   return {
     id: productRow.id,
     name: productRow.nombre,
@@ -542,7 +546,7 @@ export async function getProductById(id: number): Promise<ProductDetail | null> 
     image,
     stock,
     variants,
-    galleryImages: [],
+    galleryImages: dbMeta?.imagenes ?? [],
   }
 }
 

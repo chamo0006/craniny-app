@@ -154,28 +154,12 @@ export function ProductPageClient({ product }: { product: ProductDetail }) {
           </nav>
 
           {/* ── Main grid ── */}
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[72px_1fr_420px] lg:items-start">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_420px] lg:items-start">
 
-            {/* ── Thumbnail strip ── */}
-            <div className="order-2 flex gap-2 overflow-x-auto pb-1 lg:order-1 lg:flex-col lg:overflow-visible lg:pb-0 lg:pt-0.5">
-              {galleryImages.map((src, i) => (
-                <button
-                  key={`${src}-${i}`}
-                  type="button"
-                  onClick={() => setActiveImage(i)}
-                  className={`relative h-[60px] w-[50px] shrink-0 overflow-hidden rounded-lg border-2 transition lg:h-[72px] lg:w-[60px] ${
-                    activeImage === i
-                      ? "border-slate-900"
-                      : "border-slate-200 opacity-60 hover:border-slate-400 hover:opacity-100"
-                  }`}
-                >
-                  <Image src={src} alt="" fill className="object-cover" sizes="72px" />
-                </button>
-              ))}
-            </div>
+            {/* ── Galería: imagen principal + tiras de miniaturas ── */}
+            <div className="flex flex-col gap-3">
 
-            {/* ── Main image ── */}
-            <div className="order-1 lg:order-2">
+              {/* Imagen principal */}
               <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
                 <Image
                   src={galleryImages[activeImage] ?? product.image}
@@ -183,7 +167,7 @@ export function ProductPageClient({ product }: { product: ProductDetail }) {
                   fill
                   priority
                   className="object-cover transition-opacity duration-300"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  sizes="(max-width: 1024px) 100vw, 55vw"
                 />
                 {galleryImages.length > 1 && (
                   <span className="absolute right-3 top-3 rounded-full bg-black/50 px-2.5 py-0.5 text-[11px] font-bold text-white backdrop-blur-sm">
@@ -196,10 +180,30 @@ export function ProductPageClient({ product }: { product: ProductDetail }) {
                   </span>
                 )}
               </div>
+
+              {/* Tira de miniaturas — scroll horizontal, siempre visible */}
+              {galleryImages.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {galleryImages.map((src, i) => (
+                    <button
+                      key={`${src}-${i}`}
+                      type="button"
+                      onClick={() => setActiveImage(i)}
+                      className={`relative h-[72px] w-[60px] shrink-0 overflow-hidden rounded-xl border-2 transition ${
+                        activeImage === i
+                          ? "border-slate-900"
+                          : "border-slate-200 opacity-60 hover:border-slate-400 hover:opacity-100"
+                      }`}
+                    >
+                      <Image src={src} alt="" fill className="object-cover" sizes="60px" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* ── Ficha comercial ── */}
-            <div className="order-3 flex flex-col gap-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
+            <div className="flex flex-col gap-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
 
               {/* Título */}
               <div>

@@ -43,7 +43,7 @@ async function appendSavedProduct(product: any) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { nombre, descripcion, precio, categoria, variants } = body
+    const { nombre, descripcion, precio, categoria, variants, imagenes } = body
 
     if (!nombre || typeof precio !== 'number') {
       return NextResponse.json({ error: 'nombre y precio son obligatorios' }, { status: 400 })
@@ -51,10 +51,15 @@ export async function POST(req: Request) {
 
     // If no DATABASE_URL, fallback to local file storage
     if (!process.env.DATABASE_URL) {
-      // compute an id based on timestamp
       const id = Date.now()
       const savedProduct = { id, nombre, descripcion: descripcion || null, precio, category: categoria || null, variants: Array.isArray(variants) ? variants : [] }
       await appendSavedProduct(savedProduct)
+      // Guarda el array completo de imágenes en meta-overrides para que la galería las muestre todas
+      if (Array.isArray(imagenes) && imagenes.length > 0) {
+        const metas = await loadMetaOverrides()
+        metas[String(id)] = { ...(metas[String(id)] ?? {}), imagenes }
+        await saveMetaOverrides(metas)
+      }
       return NextResponse.json({ ok: true, id })
     }
 
@@ -85,6 +90,13 @@ export async function POST(req: Request) {
             [productId, v.talle || null, v.color || null, v.stock || 0, v.imagen_url || null]
           )
         }
+      }
+
+      // Guarda el array completo de imágenes en meta-overrides
+      if (Array.isArray(imagenes) && imagenes.length > 0) {
+        const metas = await loadMetaOverrides()
+        metas[String(productId)] = { ...(metas[String(productId)] ?? {}), imagenes }
+        await saveMetaOverrides(metas)
       }
 
       return NextResponse.json({ ok: true, id: productId })
@@ -163,6 +175,17 @@ export async function PATCH(req: Request) {
         }
         await saveMetaOverrides(metaOverrides)
       }
+    }
+
+    // Para DB products que envían imagenes[], guardarlas en meta-overrides (igual que saved-file products)
+    const dbMetaUpdates = dbUpdates.filter((u) => u.imagenes !== undefined)
+    if (dbMetaUpdates.length > 0) {
+      const metas = await loadMetaOverrides()
+      for (const { id, imagenes } of dbMetaUpdates) {
+        const key = String(id)
+        metas[key] = { ...(metas[key] ?? {}), imagenes: imagenes! }
+      }
+      await saveMetaOverrides(metas)
     }
 
     for (const { id, precio, nombre, imagen_url } of dbUpdates) {

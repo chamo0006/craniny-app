@@ -320,6 +320,7 @@ function NewProductSection() {
           categoria,
           activo,
           variants: buildVariants(),
+          imagenes: uploadedUrls,
         }),
       })
       const data = await res.json()
