@@ -159,7 +159,7 @@ function NewProductSection() {
   // Image upload
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imageInputKey, setImageInputKey] = useState(0)
 
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "err" } | null>(null)
@@ -246,7 +246,7 @@ function NewProductSection() {
       showToast(err.message, "err")
     } finally {
       setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
+      setImageInputKey((k) => k + 1) // Fuerza remount del input para permitir re-selección
     }
   }
 
@@ -442,7 +442,7 @@ function NewProductSection() {
             )}
             {uploading ? "Subiendo..." : uploadedUrls.length >= MAX_IMAGES ? "Límite alcanzado" : "Subir imágenes"}
             <input
-              ref={fileInputRef}
+              key={imageInputKey}
               type="file"
               accept="image/*"
               multiple
@@ -730,6 +730,7 @@ function StockControlSection() {
   const [freeShippingIds, setFreeShippingIds] = useState<Set<number>>(new Set())
   const [expandedImageEdit, setExpandedImageEdit] = useState<number | null>(null)
   const [imageUploading, setImageUploading] = useState(false)
+  const [imageInputKeys, setImageInputKeys] = useState<Record<number, number>>({})
   const [expandedAddVariant, setExpandedAddVariant] = useState<number | null>(null)
   const [newVariant, setNewVariant] = useState({ talle: "", color: "", stock: 0 })
   const [addingVariant, setAddingVariant] = useState(false)
@@ -816,6 +817,7 @@ function StockControlSection() {
       alert(err.message)
     } finally {
       setImageUploading(false)
+      setImageInputKeys((prev) => ({ ...prev, [product.id]: (prev[product.id] ?? 0) + 1 }))
     }
   }
 
@@ -1340,6 +1342,7 @@ function StockControlSection() {
                           )}
                           {imageUploading ? "Subiendo..." : "Agregar"}
                           <input
+                            key={imageInputKeys[product.id] ?? 0}
                             type="file"
                             accept="image/*"
                             multiple
@@ -1347,7 +1350,6 @@ function StockControlSection() {
                             disabled={imageUploading}
                             onChange={(e) => {
                               if (e.target.files?.length) addImagesToProduct(product, e.target.files)
-                              e.target.value = ""
                             }}
                           />
                         </label>
